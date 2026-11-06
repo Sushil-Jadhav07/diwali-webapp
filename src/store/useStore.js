@@ -4,6 +4,7 @@ import { rig } from '../scene/shared'
 import { findPlacement, findRetreat, addDanger, clearDanger, removeDanger, DANGER_R, HINTS, LIVE_PEOPLE } from '../world/safety'
 import { audio } from '../audio/audio'
 import { fx } from '../crackers/fx'
+import { savedTier, saveTier } from '../world/quality'
 
 // Strict child state machine order.
 export const PHASES = ['idle', 'walkingTo', 'placing', 'lighting', 'retreating', 'waiting', 'celebrating']
@@ -41,11 +42,22 @@ export const useStore = create((set, get) => ({
   blocked: 0, // count of ignored clicks while busy (for UI feedback)
   hint: null, // { id, text } friendly safety / navigation hints
   clearSeq: 0, // bumps on every Clear so systems can cancel pending work
+  menuPulse: 0, // bumps when a shop asks the cracker menu to open / highlight
+  sceneReady: false,
+  quality: savedTier() || 'auto', // 'auto' | 'low' | 'medium' | 'high' | 'ultra'
+  tier: 'medium', // resolved tier in use
 
   start: () => set({ started: true }),
   toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
   toggleAmbient: () => set((s) => ({ ambientOn: !s.ambientOn })),
   showHint: (text) => set({ hint: { id: hintId++, text } }),
+  openMenu: () => set((s) => ({ menuPulse: s.menuPulse + 1 })),
+  setSceneReady: () => set({ sceneReady: true }),
+  setQuality: (q) => {
+    saveTier(q === 'auto' ? null : q)
+    set({ quality: q })
+  },
+  setTier: (tier) => set({ tier }),
 
   // Request a new sequence from wherever the child is standing. Ignored while
   // one is running: never two at once.

@@ -14,6 +14,8 @@ const SPECS = {
   crackleBurst: { loop: false, volume: 0.65 },
   strike: { loop: false, volume: 0.45 },
   ambience: { loop: true, volume: 0.22 },
+  crowd: { loop: true, volume: 0.3 },
+  bazaar: { loop: true, volume: 0.42 },
   thunder: { loop: false, volume: 1.0 },
   capPop: { loop: false, volume: 0.5 },
   siren: { loop: true, volume: 0.32 },
@@ -31,6 +33,7 @@ const SPECS = {
   screamer: { loop: false, volume: 0.5 },
 }
 
+const AMBIENT_BEDS = new Set(['ambience', 'crowd', 'bazaar'])
 const howls = {}
 let unlocked = false
 
@@ -94,7 +97,7 @@ export const audio = {
 
   // Stop every one-shot / loop except the ambient bed (used by Clear).
   stopAll() {
-    for (const [name, h] of Object.entries(howls)) if (name !== 'ambience' && !name.startsWith('amb')) h.stop()
+    for (const [name, h] of Object.entries(howls)) if (!AMBIENT_BEDS.has(name)) h.stop()
   },
 
   stop(name, id) {

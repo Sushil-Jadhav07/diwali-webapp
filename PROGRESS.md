@@ -11,10 +11,10 @@ Plan: docs/superpowers/plans/2026-11-06-master-pass.md (world plan with coordina
 - [x] Stage 3 — data-driven cracker registry + engine; Group A sky, B ground, C sound, D toy cap gun
   - src/crackers/registry.js: 46 crackers (22 sky, 14 ground, 8 sound, phuljhadi, toy cap gun), each with hint + unique signature + danger radius + kind/params. Handlers: shells (handlers/Shells.jsx: mortar/rocket/comet/candle/gatling), fountain, spinner (+ vertical wheel), bomb, chain, capgun (handlers/CapGun.jsx), sparkler + original effects. patterns.js: peony, chrysanthemum, willow, palm, ring, doubleRing, spiral, heart, crossette, horsetail, strobe, crackle, pistil, peacock, thunder, bangs, glitterPalm. fx: colour-over-life, wind. Sound: distance-delayed + echo (R.playFar), new thunder/capPop/siren/gatling.
   - Verified: npm test 15 pass (registry: unique ids/signatures, kinds, patterns, sounds, group counts); all 46 crackers through the UI in exact phase order, no console errors.
-- [ ] Stage 4 — mandir / rangoli / society decoration polish
-- [ ] Stage 5 — Diwali Bazaar (9 stalls, shopkeepers, patakha-shop interaction)
-- [ ] Stage 6 — 25-40 residents, life director, NPC cracker events, ambient sound + toggle
-- [ ] Stage 7 — performance/quality setting, mobile, loading screen, CREDITS/README, build + verification
+- [x] Stage 4 — mandir / rangoli / society decoration polish (mandir + rangolis re-placed by the layout, Lakshmi-puja corner src/scene/LakshmiCorner.jsx, light pools, banner, festoons)
+- [x] Stage 5 — Diwali Bazaar: src/scene/bazaar/Bazaar.jsx (9 stalls from instanced parts, canopies, EN+HI signboards, props, glows, balloons, chaat steam, safety poster), shopkeepers in Residents (arrange goods, wave at the child, react to bangs), patakha counter: E or tap opens/highlights the cracker menu
+- [x] Stage 6 — 44 residents on one instanced rig (19 spectators in 6 chat groups, 9 shopkeepers, 4 bench sitters, 5 balcony watchers, 4 kids at play, 3 bazaar shoppers) with walking legs, A* roaming, danger-zone soft barrier; life director src/life/NpcEvents.jsx (max 2 NPC cracker events, budget-gated, same registry handlers + danger zones; Clear cancels); location-aware ambience (crowd + bazaar beds) gated by the Ambient toggle
+- [ ] Stage 7 — performance/quality setting, mobile, loading screen, CREDITS/README, build + verification (DONE so far: quality tiers Low/Medium/High/Ultra auto + saved, dynamic resolution, loading screen, README/CREDITS updated; LEFT: perf pass, mobile check, final full verification)
 
 ## QUEUED: FINAL PASS (user, 2026-11-06) — start only after every MASTER PASS stage above is checked
 Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
@@ -47,7 +47,7 @@ Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
 - [x] 6 More crackers: 16 total in the sidebar (phuljhadi, anar, anardeluxe, colorshower, chakri, chakrideluxe, snake, asynk, rocket, rocketbundle, skyshot, cake, bijli, sutli, ladi, poppop), categorised scrollable sidebar (Hand-held, Ground, Sky, Sound)
 
 ## In progress
-MASTER PASS stage 2 (danger rings done; head look-at; NPC keep-out comes with stage 6).
+MASTER PASS stage 7 (perf pass, mobile check, final verification). Then the queued FINAL PASS.
 
 ## Next step
 Optional polish only (see LATER). If continuing, run the scratchpad-style UI verification again after any change (fire every [data-cracker] button, check the phase order via a store subscription, hammer buttons, check Replay/Clear/sound).
@@ -68,6 +68,7 @@ Optional polish only (see LATER). If continuing, run the scratchpad-style UI ver
 - Audio checked offline: all 10 synthesised sounds render (no NaN, peaks 0.5-0.85, <=121 ms each to generate). Not listened to by ear (headless).
 
 ## Known bugs
+- User feedback 2026-11-06 fixed: sky show camera restored, faster walk/run, brighter society.
 - Perf: idle 35-41 fps at DPR 1 on Intel UHD 630 in the 9x world (was 52-55). To fix in stage 7 (string-light/diya/balcony instancing costs, shadows, quality setting).
 - claude-mem MCP worker was unreachable on 2026-11-06 ("worker could not complete this request"), so session notes live only in this file.
 - Console warning "THREE.Clock deprecated" comes from inside @react-three/fiber 9 (not our code); harmless.

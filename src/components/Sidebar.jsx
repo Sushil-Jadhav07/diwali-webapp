@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FlameIcon, SpinnerIcon, ShieldIcon } from './Icons'
 import { CATEGORIES, CRACKERS } from '../crackers/catalog'
@@ -81,6 +82,15 @@ function CardMobile({ c, busy, active, onLight }) {
 }
 
 export default function Sidebar() {
+  // a shop (or anything else) can ask the menu to light up for a moment
+  const pulse = useStore((s) => s.menuPulse)
+  const [glow, setGlow] = useState(false)
+  useEffect(() => {
+    if (!pulse) return
+    setGlow(true)
+    const t = setTimeout(() => setGlow(false), 1800)
+    return () => clearTimeout(t)
+  }, [pulse])
   const phase = useStore((s) => s.phase)
   const current = useStore((s) => s.current)
   const busy = isBusy(phase)
@@ -90,7 +100,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop / tablet: left sidebar, scrollable, grouped by category */}
-      <aside className="glass pointer-events-auto absolute top-24 bottom-4 left-4 z-20 hidden w-[300px] flex-col rounded-2xl p-4 md:flex">
+      <aside className={`glass pointer-events-auto absolute top-24 bottom-4 left-4 z-20 hidden w-[300px] flex-col rounded-2xl p-4 md:flex ${glow ? 'ring-2 ring-gold-300 shadow-[0_0_40px_rgb(251_191_36/0.55)]' : ''}`}>
         <div className="mb-2 flex items-end justify-between">
           <div>
             <h2 className="font-display text-xl font-semibold text-gold-200">Crackers</h2>

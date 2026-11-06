@@ -5,7 +5,11 @@ import { useStore } from '../store/useStore'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 import { fx } from '../crackers/fx'
 import { rig, mulberry32, damp } from './shared'
-import { LIVE_PEOPLE } from '../world/safety'
+import { LIVE_PEOPLE, pushOutOfDanger } from '../world/safety'
+import { LIFE } from '../life/life'
+import { findPath } from '../world/collision'
+import { STALLS, BENCHES, PLAY_AREA, BAZAAR } from '../world/layout'
+import { HOUSES, housePoint } from './Houses'
 
 // ---------------------------------------------------------------------------
 // Residents of the society: 19 low-detail procedural people in small groups.
@@ -133,6 +137,38 @@ const ROSTER = [
   { g: 5, kind: 'woman', outfit: 'sari', x: -7.4, z: 5.7, h: 1.55, top: '#e9c46a', bottom: '#6b2a8f', cheer: 'clap', loud: 'ears', idle: 'folded' },
 ]
 
+// Society life beyond the spectator groups: shopkeepers, bench sitters, balcony
+// watchers, kids at play and bazaar shoppers. `mode` drives behaviour.
+const SHOP_LOOK = [
+  { kind: 'man', outfit: 'kurta', top: '#f59e0b', legs: '#efe6d0' },
+  { kind: 'woman', outfit: 'sari', top: '#0f766e', bottom: '#be185d' },
+  { kind: 'man', outfit: 'shirt', top: '#e5e7eb', legs: '#334155' },
+  { kind: 'woman', outfit: 'salwar', top: '#a21caf', legs: '#fef3c7', shawl: '#f472b6' },
+]
+const EXTRA = (() => {
+  const out = []
+  let g = 50
+  STALLS.forEach((st, k) => {
+    const L = SHOP_LOOK[k % SHOP_LOOK.length]
+    const r = st.facing === '-z' ? Math.PI : 0
+    out.push({ g: g++, ...L, mode: 'shop', x: st.x + 0.05 * Math.sin(r), z: st.z + 0.05 * Math.cos(r), yaw: r, h: L.kind === 'woman' ? 1.58 : 1.72, cheer: 'clap', loud: 'flinch', idle: 'normal' })
+  })
+  BENCHES.slice(0, 4).forEach((b, k) =>
+    out.push({ g: g++, kind: k % 2 ? 'elderF' : 'elderM', outfit: k % 2 ? 'sari' : 'kurta', top: k % 2 ? '#7c2d12' : '#f3efe6', bottom: '#e4d6b8', legs: '#f3efe6', shawl: '#8c8c8c', mode: 'bench', x: b.x, z: b.z + 0.1, yaw: b.rot, h: 1.6, cheer: 'clap', loud: 'flinch', idle: 'normal' }),
+  )
+  const balc = HOUSES.filter((h) => h.floors >= 3).filter((_, i) => i % 3 === 1).slice(0, 5)
+  balc.forEach((h, k) => {
+    const f = 1 + (k % (h.floors - 1))
+    const q = housePoint(h, 0.25, 0, 0.3)
+    out.push({ g: g++, kind: k % 2 ? 'woman' : 'man', outfit: k % 2 ? 'sari' : 'kurta', top: ['#dc2626', '#2563eb', '#16a34a', '#f59e0b', '#db2777'][k], bottom: '#fde68a', legs: '#efe6d0', mode: 'balcony', x: q.x, z: q.z, y: f * 3 + 0.1, yaw: h.rot, h: 1.65, cheer: 'clap', loud: 'none', idle: 'folded' })
+  })
+  for (let k = 0; k < 4; k++)
+    out.push({ g: g++, kind: k % 2 ? 'girl' : 'boy', outfit: k % 2 ? 'lehenga' : 'kurta', top: ['#f97316', '#e11d74', '#22c55e', '#eab308'][k], bottom: '#7c3aed', legs: '#f3ead6', mode: 'play', x: 17 + k * 3.5, z: 14.5, yaw: 0, h: 1.12 + k * 0.04, cheer: 'cheer', loud: 'ears', idle: 'normal' })
+  for (let k = 0; k < 3; k++)
+    out.push({ g: g++, kind: k === 1 ? 'woman' : 'man', outfit: k === 1 ? 'sari' : 'shirt', top: ['#0ea5e9', '#9f1239', '#84cc16'][k], bottom: '#fbbf24', legs: '#1f2937', mode: 'wander', x: -28 + k * 8, z: BAZAAR.laneZ, yaw: 0, h: 1.7, cheer: 'clap', loud: 'flinch', idle: 'normal' })
+  return out
+})()
+
 const OUTFIT = {
   kurta: { hemLen: 0.44, flare: 1.05, sleeve: true },
   shirt: { hemLen: 0.12, flare: 0.98, sleeve: true },
@@ -143,13 +179,13 @@ const OUTFIT = {
 const SKIN = ['#8d5524', '#a86b3c', '#c68642', '#9c6644', '#7a4a2a', '#b5835a']
 const SHOES = ['#3a2418', '#1a1614', '#8a6a2a', '#5a1e1e']
 
-const KEYS = ['bodyYaw', 'spineX', 'spineZ', 'headYaw', 'headPitch', 'shLx', 'shLz', 'shRx', 'shRz', 'elLx', 'elLz', 'elRx', 'elRz', 'bounce']
+const KEYS = ['bodyYaw', 'spineX', 'spineZ', 'headYaw', 'headPitch', 'shLx', 'shLz', 'shRx', 'shRz', 'elLx', 'elLz', 'elRx', 'elRz', 'bounce', 'legL', 'legR', 'yOff']
 const blank = () => Object.fromEntries(KEYS.map((k) => [k, 0]))
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a))
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v)
 
 function buildPeople() {
-  return ROSTER.map((r, i) => {
+  return [...ROSTER, ...EXTRA].map((r, i) => {
     const rnd = mulberry32(1000 + i * 7)
     const kid = r.kind === 'boy' || r.kind === 'girl'
     const elder = r.kind === 'elderM' || r.kind === 'elderF'
@@ -161,13 +197,17 @@ function buildPeople() {
     const top = r.top
     const bottom = r.bottom || top
     // stage-1 layout: spectators stand along the east/west edges of the Cracker Ground
-    const x = Math.sign(r.x) * (16.8 + (Math.abs(r.x) - 4.5) * 0.75)
-    const z = r.z * 1.3 - 5
-    LIVE_PEOPLE[i] = { x, z }
+    const x = r.mode ? r.x : Math.sign(r.x) * (16.8 + (Math.abs(r.x) - 4.5) * 0.75)
+    const z = r.mode ? r.z : r.z * 1.3 - 5
     return {
       ...r,
       x,
       z,
+      y: r.y || 0,
+      mode: r.mode || 'group',
+      task: null,
+      rest: 0,
+      live: { x, z },
       i,
       kid,
       elder,
@@ -230,6 +270,10 @@ function buildGroups(people) {
     g.timer = 1.5 + gi * 0.9
   })
   for (const p of people) {
+    if (p.mode !== 'group') {
+      p.baseYaw = p.yaw ?? 0
+      continue
+    }
     const g = groups[p.g]
     const yawCourt = Math.atan2(0 - p.x, -1 - p.z)
     const yawGroup = Math.atan2(g.cx - p.x, g.cz - p.z)
@@ -397,7 +441,7 @@ function writePerson(p, M, t) {
   const c = p.cur
   const i = p.i
   const s = p.s
-  _p.set(p.x, c.bounce * s, p.z)
+  _p.set(p.x, p.y + c.yOff + c.bounce * s, p.z)
   _q.setFromEuler(_e.set(0, p.baseYaw + c.bodyYaw, 0, 'XYZ'))
   _s.set(s, s, s)
   mRoot.compose(_p, _q, _s)
@@ -410,8 +454,9 @@ function writePerson(p, M, t) {
   for (let k = 0; k < 2; k++) {
     const side = k === 0 ? 1 : -1
     const li = i * 2 + k
-    M.leg.setMatrixAt(li, local(mOut, mRoot, 0.085 * p.w * side, HIP_Y, 0, 0, 0, 0.03 * side + c.spineZ * 0.3))
-    M.foot.setMatrixAt(li, local(mOut, mRoot, (0.09 * p.w + 0.02) * side, 0, 0, 0, 0.12 * side, 0))
+    const rx = k === 0 ? c.legL : c.legR
+    M.leg.setMatrixAt(li, local(mOut, mRoot, 0.085 * p.w * side, HIP_Y, 0, rx, 0, 0.03 * side + c.spineZ * 0.3))
+    M.foot.setMatrixAt(li, local(mOut, mRoot, (0.09 * p.w + 0.02) * side, HIP_Y - HIP_Y * Math.cos(rx), -HIP_Y * Math.sin(rx), 0, 0.12 * side, 0))
   }
 
   // spine / torso
@@ -462,6 +507,8 @@ export default function Residents() {
   const people = useMemo(buildPeople, [])
   const groups = useMemo(() => buildGroups(people), [people])
   const N = people.length
+  LIFE.people = people
+  LIFE.groups = groups.filter((g) => g && g.members.length >= 2 && people[g.members[0]].mode === 'group')
 
   // static per-instance colours (must exist before the first render)
   useLayoutEffect(() => {
@@ -504,6 +551,7 @@ export default function Residents() {
 
     // rotate who is talking in each group
     for (const g of groups) {
+      if (!g) continue // sparse: solo residents use high group ids
       g.timer -= dt
       if (g.timer <= 0) {
         const n = g.members.length
@@ -516,9 +564,63 @@ export default function Residents() {
       }
     }
 
+    LIVE_PEOPLE.length = 0
     for (let i = 0; i < N; i++) {
       const p = people[i]
       const T = p.tgt
+
+      // ---- movement: roaming modes and NPC-event tasks ----
+      if (!p.task && (p.mode === 'play' || p.mode === 'wander') && t > p.rest) {
+        let gx
+        let gz
+        if (p.mode === 'play') {
+          gx = PLAY_AREA.minX + 1 + Math.random() * (PLAY_AREA.maxX - PLAY_AREA.minX - 2)
+          gz = PLAY_AREA.minZ + 1 + Math.random() * (PLAY_AREA.maxZ - PLAY_AREA.minZ - 2)
+        } else {
+          const st0 = STALLS[(Math.random() * STALLS.length) | 0]
+          gx = st0.x + (Math.random() - 0.5) * 2
+          gz = BAZAAR.laneZ + (st0.facing === '-z' ? 1.6 : -1.6)
+        }
+        p.task = { kind: 'goto', x: gx, z: gz, speed: p.mode === 'play' ? 2.1 : 1.0, roam: true }
+      }
+      let walking = 0
+      const tk = p.task
+      if (tk && tk.kind === 'goto' && !tk.arrived) {
+        if (!tk.path) {
+          tk.path = findPath(p.x, p.z, tk.x, tk.z) || [{ x: tk.x, z: tk.z }]
+          tk.k = 0
+        }
+        const w = tk.path[tk.k]
+        const dx = w.x - p.x
+        const dz = w.z - p.z
+        const d = Math.hypot(dx, dz)
+        const sp = (tk.speed || 1.2) * (p.kid ? 1.1 : 1)
+        if (d < 0.1) {
+          if (tk.k < tk.path.length - 1) tk.k++
+          else {
+            tk.arrived = true
+            if (tk.roam) {
+              p.task = null
+              p.rest = t + 2 + Math.random() * 5
+            }
+          }
+        } else {
+          const step = Math.min(d, sp * dt)
+          p.x += (dx / d) * step
+          p.z += (dz / d) * step
+          walking = sp
+          p.baseYaw += wrap(Math.atan2(dx, dz) - p.baseYaw) * (1 - Math.exp(-8 * dt))
+        }
+      }
+      if (p.mode !== 'balcony') {
+        // soft barrier around lit crackers (the lighter ignores its own)
+        p.live.x = p.x
+        p.live.z = p.z
+        pushOutOfDanger(p.live, 0.3, tk?.ignore ?? null)
+        p.x = p.live.x
+        p.z = p.live.z
+        LIVE_PEOPLE.push(p.live)
+      }
 
       // ---- reaction drives (staggered per person) ----
       p.fireT = fired ? p.fireT + dt : 0
@@ -536,6 +638,51 @@ export default function Residents() {
       // ---- pose targets ----
       for (let k = 0; k < KEYS.length; k++) T[KEYS[k]] = 0
       idlePose(p, T, t)
+      if (walking > 0) {
+        const sw = Math.sin(t * walking * 5.2 + p.ph) * (p.kid ? 0.65 : 0.5)
+        T.legL = sw
+        T.legR = -sw
+        T.shLx = -sw * 0.7
+        T.shRx = sw * 0.7
+        T.elLx = T.elRx = -0.35
+        T.bounce = Math.abs(Math.cos(t * walking * 5.2 + p.ph)) * 0.025 * (p.kid ? 2 : 1)
+      } else if (p.mode === 'bench') {
+        T.legL = T.legR = -1.45
+        T.yOff = -(HIP_Y - 0.47) * p.s
+        T.spineX = -0.05
+        T.shLx = T.shRx = -0.5
+        T.elLx = T.elRx = -0.6
+      } else if (tk && (tk.kind === 'crouch' || tk.kind === 'light')) {
+        T.legL = T.legR = -1.15
+        T.yOff = -0.36 * p.s
+        T.spineX = 0.75
+        T.headPitch = 0.35
+        if (tk.kind === 'light') {
+          T.shRx = -1.3
+          T.elRx = -0.15
+        } else {
+          T.shRx = T.shLx = -0.9
+          T.elRx = T.elLx = -0.4
+        }
+      } else if (p.mode === 'shop') {
+        const cyc = (t + p.ph * 3) % 7
+        if (cyc < 1.6) {
+          // arranging goods on the counter
+          T.spineX = 0.18
+          T.shRx = -0.95 + Math.sin(t * 5) * 0.08
+          T.elRx = -0.7
+        }
+        if (Math.hypot(rig.pos.x - p.x, rig.pos.z - p.z) < 4.5) {
+          // greet the child with a wave
+          T.shRz = -2.45
+          T.shRx = 0
+          T.elRz = -0.45 + Math.sin(t * 8 + p.ph) * 0.35
+          const rel = wrap(Math.atan2(rig.pos.x - p.x, rig.pos.z - p.z) - p.baseYaw)
+          T.headYaw = clamp(rel, -0.9, 0.9)
+        }
+      } else if (p.mode === 'balcony') {
+        T.spineX = 0.08
+      }
 
       const reactingLoud = p.loudV > 0.4 && p.loudStyle !== 'none'
       const reactingCheer = !reactingLoud && p.excite > p.thresh
@@ -544,7 +691,11 @@ export default function Residents() {
       let looking = false
       let lx = 0
       let lz = 0
-      if (fired && p.fireT > p.delay * 0.5) {
+      if (tk && (tk.kind === 'watch' || tk.kind === 'crouch' || tk.kind === 'light')) {
+        looking = true
+        lx = tk.x
+        lz = tk.z
+      } else if (fired && p.fireT > p.delay * 0.5) {
         looking = true
         lx = tx
         lz = tz
@@ -566,7 +717,7 @@ export default function Residents() {
         // chatting: listeners face the speaker, the speaker faces a listener
         const speaking = g.speaker === i
         const o = people[speaking ? g.listener : g.speaker]
-        if (o !== p) {
+        if (o !== p && p.mode === 'group') {
           const rel = wrap(Math.atan2(o.x - p.x, o.z - p.z) - p.baseYaw)
           T.bodyYaw = clamp(rel * 0.25, -0.5, 0.5)
           T.headYaw = clamp(rel - T.bodyYaw, -0.9, 0.9)

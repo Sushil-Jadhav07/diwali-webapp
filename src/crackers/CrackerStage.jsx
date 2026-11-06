@@ -19,7 +19,7 @@ import CapGun from './handlers/CapGun'
 import { fx } from './fx'
 
 // Registry kind -> behaviour handler. Every handler receives { c, cfg }.
-const HANDLERS = {
+export const HANDLERS = {
   shells: Shells,
   fountain: Fountain,
   spinner: Spinner,

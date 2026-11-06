@@ -8,6 +8,7 @@ import Minimap from './components/Minimap'
 import Hint from './components/Hint'
 import Joystick from './components/Joystick'
 import { bindKeyboard } from './world/input'
+import LoadingScreen from './components/LoadingScreen'
 
 export default function App() {
   useEffect(() => bindKeyboard(), [])
@@ -28,6 +29,7 @@ export default function App() {
         </p>
       </div>
       <IntroOverlay />
+      <LoadingScreen />
     </main>
   )
 }

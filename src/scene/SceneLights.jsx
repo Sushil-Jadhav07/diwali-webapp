@@ -3,6 +3,8 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { fx } from '../crackers/fx'
 import { rig } from './shared'
+import { useStore } from '../store/useStore'
+import { TIERS } from '../world/quality'
 
 const SKY = new THREE.Color('#5254a8')
 const FOG = new THREE.Color('#14102e')
@@ -12,6 +14,8 @@ export default function SceneLights() {
   const hemi = useRef()
   const moon = useRef()
   const fill = useRef()
+  const tier = useStore((s) => s.tier)
+  const T = TIERS[tier] || TIERS.medium
   const scene = useThree((s) => s.scene)
   useFrame(() => {
     // moonlight shadow frustum follows the child (snapped to texels: no shimmer)
@@ -40,8 +44,8 @@ export default function SceneLights() {
         position={[-14, 24, -18]}
         color="#9fb0ff"
         intensity={1.15}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
+        castShadow={T.shadows}
+        shadow-mapSize={[T.shadowMap, T.shadowMap]}
         shadow-camera-left={-18}
         shadow-camera-right={18}
         shadow-camera-top={18}

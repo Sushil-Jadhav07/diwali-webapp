@@ -554,7 +554,11 @@ function gatling() {
 }
 const rand01 = () => Math.random()
 
+import { crowd, bazaar } from './synthAmbient.js'
+
 export const SOUND_BUILDERS = {
+  crowd,
+  bazaar,
   hiss: fuseHiss,
   crackle: sparklerCrackle,
   whoosh: anarWhoosh,

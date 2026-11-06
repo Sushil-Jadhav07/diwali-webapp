@@ -141,7 +141,7 @@ function DistantFireworks() {
     if (!fx.ready) return
     const t = clock.elapsedTime
     if (t < next.current) return
-    next.current = t + rand(1.8, 4.5)
+    next.current = t + rand(1.8, 4.5) / Math.max(0.2, fx.ambientScale ?? 1)
     if (fx.sparks.alive > 3200) return
     const a = Math.random() * Math.PI * 2
     const rad = rand(95, 170)

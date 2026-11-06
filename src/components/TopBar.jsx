@@ -1,5 +1,6 @@
 import { ReplayIcon, TrashIcon, SoundOnIcon, SoundOffIcon, MusicIcon, MusicOffIcon } from './Icons'
 import Places from './Places'
+import Settings from './Settings'
 import { SOCIETY_NAME } from '../world/layout'
 import { useStore, isBusy } from '../store/useStore'
 import { audio } from '../audio/audio'
@@ -71,6 +72,7 @@ export default function TopBar() {
           {ambientOn ? <MusicIcon className="h-4 w-4" /> : <MusicOffIcon className="h-4 w-4" />}
         </IconButton>
         <Places />
+        <Settings />
         <IconButton
           label={soundOn ? 'Mute sound' : 'Turn sound on'}
           onClick={() => {

@@ -18,17 +18,35 @@ import CameraRig from './CameraRig'
 import Child from './Child'
 import FxLayer from '../crackers/FxLayer'
 import CrackerStage from '../crackers/CrackerStage'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useStore } from '../store/useStore'
+import { TIERS } from '../world/quality'
+import { fx } from '../crackers/fx'
 import Backdrop from './Backdrop'
 import ClickToMove from './ClickToMove'
+import Bazaar from './bazaar/Bazaar'
+import LakshmiCorner from './LakshmiCorner'
+import NpcEvents from '../life/NpcEvents'
+import AmbientAudio from '../audio/AmbientAudio'
+import SceneReady from './SceneReady'
 import DangerRings from './DangerRings'
 import LightPools from './LightPools'
 import { START } from '../world/layout'
 
 export default function Experience() {
-  // Start at 1x and raise resolution only when the GPU has headroom (cap 2).
-  const maxDpr = Math.min(2, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1)
+  // Quality tier sets the resolution range; PerformanceMonitor scales within
+  // it (dynamic resolution). Ultra may supersample up to a 4K-wide canvas.
+  const tierId = useStore((s) => s.tier)
+  const T = TIERS[tierId] || TIERS.medium
+  const devDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+  const maxDpr = tierId === 'ultra' ? Math.min(T.dprMax, 3840 / Math.max(1, typeof window !== 'undefined' ? window.innerWidth : 1920)) : Math.min(T.dprMax, Math.max(1, devDpr))
+  const minDpr = Math.min(T.dprMin, maxDpr)
   const [dpr, setDpr] = useState(1)
+  useEffect(() => setDpr(Math.min(maxDpr, Math.max(minDpr, 1))), [maxDpr, minDpr])
+  useEffect(() => {
+    fx.tierScale = T.particles
+    fx.ambientScale = T.ambientFx
+  }, [T])
   return (
     <Canvas
       shadows="percentage"
@@ -45,8 +63,8 @@ export default function Experience() {
       <PerformanceMonitor
         factor={0}
         flipflops={4}
-        onChange={({ factor }) => setDpr(Math.round((1 + (maxDpr - 1) * factor) * 4) / 4)}
-        onFallback={() => setDpr(1)}
+        onChange={({ factor }) => setDpr(Math.round((minDpr + (maxDpr - minDpr) * factor) * 4) / 4)}
+        onFallback={() => setDpr(minDpr)}
       />
       <AdaptiveDpr pixelated={false} />
       <Suspense fallback={null}>
@@ -59,6 +77,11 @@ export default function Experience() {
         <Trees />
         <Backdrop />
         <ClickToMove />
+        <Bazaar />
+        <LakshmiCorner />
+        <NpcEvents />
+        <AmbientAudio />
+        <SceneReady />
         <DangerRings />
         <LightPools />
         <Society />
@@ -70,8 +93,8 @@ export default function Experience() {
         <CameraRig />
       </Suspense>
       <EffectComposer multisampling={0} disableNormalPass>
-        <Bloom mipmapBlur intensity={1.05} luminanceThreshold={0.95} luminanceSmoothing={0.25} radius={0.78} />
-        <Vignette offset={0.28} darkness={0.72} />
+        <Bloom mipmapBlur levels={T.bloomLevels} intensity={1.05} luminanceThreshold={0.95} luminanceSmoothing={0.25} radius={0.78} />
+        <Vignette offset={0.28} darkness={T.vignette ? 0.72 : 0.0} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
     </Canvas>

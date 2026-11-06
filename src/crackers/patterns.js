@@ -25,7 +25,7 @@ const pick = (arr) => arr[(Math.random() * arr.length) | 0]
 export function budget() {
   if (!fx.ready) return 1
   const load = fx.sparks.alive / fx.sparks.n
-  return Math.max(0.35, 1 - Math.max(0, load - 0.35) * 1.3)
+  return Math.max(0.35, 1 - Math.max(0, load - 0.35) * 1.3) * (fx.tierScale ?? 1)
 }
 
 // camera-facing plane basis for planar patterns (heart, spiral, peacock, text)

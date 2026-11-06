@@ -12,6 +12,11 @@
 | Sky gradient, moon | Shader and mesh in `src/scene/Sky.jsx` | Original work for this project |
 | All sounds (fuse hiss, sparkler crackle, anar whoosh, chakri whirr, rocket whistle, boom, thump, crackle, match strike, night ambience) | Synthesised in the browser in `src/audio/synth.js`, encoded to WAV and played by Howler | Original work for this project |
 | Cracker icons and UI icons | Hand-written inline SVG in `src/components/CrackerIcon.jsx` and `src/components/Icons.jsx` | Original work for this project |
+| Asynk Family Residency world: blocks, perimeter wall, gate, security cabin, signboards, parking, water tank, lamp posts, festoons, backdrop skyline/hills | Procedural geometry and canvas textures in `src/scene/` and `src/world/layout.js` | Original work for this project |
+| Diwali Bazaar (9 stalls, props, canopies, signboards, safety poster), Lakshmi-puja corner (painting drawn on a canvas) | `src/scene/bazaar/Bazaar.jsx`, `src/scene/LakshmiCorner.jsx` | Original work for this project |
+| Residents, shopkeepers, watchman | Procedural instanced rig in `src/scene/Residents.jsx` | Original work for this project |
+| Extra sounds: thunder, toy cap pop, siren whistle, gatling pops, crowd murmur, bazaar bed with bells | Synthesised in `src/audio/synth.js` and `src/audio/synthAmbient.js` | Original work for this project |
+| Collision, A* pathfinding, safety placement, burst patterns, cracker registry | `src/world/*.js`, `src/crackers/patterns.js`, `src/crackers/registry.js` | Original work for this project |
 
 No Pixabay or Mixamo content is used, as the project rules require.
 
