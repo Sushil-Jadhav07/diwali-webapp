@@ -15,6 +15,10 @@
 
 No Pixabay or Mixamo content is used, as the project rules require.
 
+| Item | Source | Licence |
+|---|---|---|
+| ASYNK logo (`public/assets/logomain.png`) | Supplied by the user (their company brand) | Owned by ASYNK; used with the user's permission |
+
 ## Fonts (loaded from Google Fonts, not bundled)
 
 | Font | Source | Licence |
@@ -45,6 +49,12 @@ Versions are as installed. Licences were read from each package's `package.json`
 | @vitejs/plugin-react | 6.2.1 | MIT | https://github.com/vitejs/vite-plugin-react |
 
 `lucide-react` (ISC) was tried briefly and then removed, so that every dependency we chose ourselves is MIT.
+
+## Development tools (not shipped in the app)
+
+| Tool | Source | Licence | Notes |
+|---|---|---|---|
+| img2threejs skill | https://github.com/img2threejs/img2threejs (commit 0c0c49b) | Apache-2.0 (licence kept in `.claude/skills/img2threejs/LICENSE`) | Installed project-locally at `.claude/skills/img2threejs`. The user explicitly approved Apache-2.0 for this tool. Nothing from it is bundled into the web app. |
 
 ## Design guidance
 

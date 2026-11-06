@@ -5,13 +5,29 @@
 - [x] M2 — Child model, animations, state machine, walking & placing flow
 - [x] M3 — 5 crackers (Phuljhadi, Anar, Chakri, Rocket, Sky shot) with particles, lights, bloom, sound
 - [x] M4 — Polish, mobile layout, CREDITS.md, README.md, `npm run build` clean, verification
-- [ ] M5 (user request, added mid-run) — install img2threejs skill project-locally and use it to rebuild one cracker prop from a CC0/CC-BY reference photo
+- [x] M5 — img2threejs installed project-locally at .claude/skills/img2threejs (Apache-2.0, user-approved). Its own test suite on Windows: 1416 tests, 7 failures, 3 errors, 64 skipped (upstream says Windows is unsupported). Not used for modelling: the user has not provided a reference image, so the mandir is procedural.
+
+## UPGRADE PASS (user, 2026-11-06) — priority order
+- [x] Logo: ASYNK wordmark (public/assets/logomain.png, provided by user) on a light plate in the top bar + welcome card (src/components/BrandLogo.jsx)
+- [x] ASYNK Shot (user top priority): sky shell writing "HAPPY DIWALI / FROM ASYNK" in sparks (src/crackers/AsynkShot.jsx), registered in the Sky category
+- [x] 1 Character: refined procedural Aarav (src/scene/childBody.jsx + Child.jsx). No CC0 rigged kid with these animations could be fetched unattended, so the procedural one was upgraded.
+- [x] 2 People: 19 residents (4 men, 6 women, 4 boys, 2 girls, 3 elders) in src/scene/Residents.jsx, instanced per body part. (Commit c04ae14's message says 16; the real count is 19.)
+- [x] 3 Mandir: procedural temple at (-6.3, -5.4), src/scene/Mandir.jsx + src/scene/society/{layout,Glows,Marigolds}.js(x)
+- [x] 4 Rangoli: detailed mandalas (textures.js, Ground.jsx)
+- [ ] 5 Society look: apartment balconies, boundary wall + gate + garland entrance, banner, cars/scooters, lamp posts, sky lanterns (Society.jsx) — IN PROGRESS
+- [x] 6 More crackers: 16 total in the sidebar (phuljhadi, anar, anardeluxe, colorshower, chakri, chakrideluxe, snake, asynk, rocket, rocketbundle, skyshot, cake, bijli, sutli, ladi, poppop), categorised scrollable sidebar (Hand-held, Ground, Sky, Sound)
 
 ## In progress
-M5 — img2threejs (see below)
+Upgrade 5 — society look (src/scene/Society.jsx)
 
 ## Next step
-Copy img2threejs checkout into project/.claude/skills/img2threejs (project-local, NOT ~/.claude), run its python unittest suite, find a CC0/CC-BY anar/flowerpot photo, run forge/state.py init + forge/next.py gates, port resulting model into src/crackers/Anar.jsx AnarModel.
+Finish src/scene/Society.jsx (wall + gate at z~12.5, banner, vehicles in z 8.2..11.8, lamp posts at x=+/-9, sky lanterns; no new lights), then rerun the scratchpad verify (reads all cracker ids from the DOM) and commit.
+Parallel forks were used for items 2/3-4/6; they stopped on an account rate limit, and their finished work was verified and committed by the main session.
+
+## Verification log (upgrade pass, 2026-11-06)
+- Build passes. Full UI run on the dev server: all 16 sidebar crackers ran walkingTo>placing>lighting>retreating>waiting>celebrating>idle; forced clicks on every button + Replay during each run changed nothing; Replay, Clear (5 -> 0) and sound toggle OK; no console errors (only the R3F THREE.Clock warning); idle ~54 fps at DPR 1 on Intel UHD 630 with residents + mandir mounted.
+- Offline audio: all 21 synthesised sounds render with no NaN and peaks 0.5-0.97.
+- Screenshots read back: ASYNK text readable in the sky (gold HAPPY DIWALI, white FROM, orange ASYNK); Aarav close-up (face, kurta folds, juti); mandir; residents covering ears on a Bijli bang; categorised sidebar; mobile bar grouped by category with no page overflow.
 
 ## Verification log (M4, 2026-11-06)
 - `npm run build`: passes (single ~1.4 MB JS chunk, 0 errors).
