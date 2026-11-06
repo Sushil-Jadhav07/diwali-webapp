@@ -80,6 +80,13 @@ export default function Joystick() {
       >
         {t('ui.run')}
       </button>
+      <button
+        type="button"
+        onPointerDown={() => (input.jumpAt = performance.now())}
+        className="h-12 min-w-12 cursor-pointer rounded-xl border border-gold-400/50 bg-gold-400/20 px-3 font-display text-sm font-semibold text-gold-200 active:scale-95"
+      >
+        {t('ui.jump')}
+      </button>
     </div>
   )
 }

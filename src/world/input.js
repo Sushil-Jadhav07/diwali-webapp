@@ -11,6 +11,7 @@ export const input = {
   runToggle: false, // mobile run button
   nav: null, // { path: [{x,z}], i, label }
   interactAt: 0, // time of the last E / tap interaction (performance.now)
+  jumpAt: 0, // time of the last jump press
   cameraTouchedAt: 0, // last time the user orbited/zoomed
 }
 
@@ -34,6 +35,10 @@ export function bindKeyboard() {
       if (e.code.startsWith('Arrow')) e.preventDefault()
     }
     if (e.code === 'KeyE') input.interactAt = performance.now()
+    if (e.code === 'Space') {
+      input.jumpAt = performance.now()
+      e.preventDefault()
+    }
   })
   window.addEventListener('keyup', (e) => {
     const k = KEYMAP[e.code]

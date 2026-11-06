@@ -38,6 +38,7 @@ export default {
     loading: 'Lighting the diyas…',
     controls: 'WASD / arrows to walk · Shift to run · click the ground to walk there · drag to orbit · scroll to zoom',
     run: 'Run',
+    jump: 'Jump',
     joystick: 'Move joystick',
     oneAtATime: 'One at a time. Wait for this one to finish.',
     mapAria: 'Map of {name}. Click to walk there.',
@@ -65,6 +66,7 @@ export default {
     cantReach: "Aarav can't get there from here.",
     busyNow: 'Aarav is busy with a cracker. Try again when he is done.',
     shopNear: 'Press E (or tap the counter) to see the crackers.',
+    stayBack: "Stay back! It's lit.",
     shopOpen: 'Patakha Shop: pick any cracker from the menu, then Aarav will light it on an open spot.',
   },
   sign: {

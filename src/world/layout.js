@@ -87,7 +87,7 @@ export const STALLS = [
 export const PLAY_ITEMS = [
   { id: 'swing', x: 16, z: 10.2, w: 4.2, d: 1.8, h: 2.6 },
   { id: 'slide', x: 21.5, z: 10.2, w: 1.2, d: 4.2, h: 2.2 },
-  { id: 'seesaw', x: 26.5, z: 10.2, w: 4.2, d: 0.7, h: 0.8 },
+  { id: 'seesaw', x: 26.5, z: 10.2, w: 4.2, d: 0.7, h: 0.6 },
   { id: 'sandpit', x: 31, z: 11.5, w: 3, d: 3, h: 0 }, // walkable, decorative
 ]
 export const BENCHES = [
@@ -187,7 +187,11 @@ export const COLLIDERS = (() => {
   circles.push({ x: MANDIR.x, z: MANDIR.z, r: 2.4, h: 5, tag: 'mandir' })
   for (const t of TREES) circles.push({ x: t.x, z: t.z, r: 0.95 * t.s, h: 6, tag: 'tree' })
   for (const s of SCOOTERS) circles.push({ x: s.x, z: s.z, r: 0.55, h: 1.1, tag: 'scooter' })
-  for (const b of BENCHES) circles.push({ x: b.x, z: b.z, r: 0.75, h: 0.9, tag: 'bench' })
+  // benches are planks: box colliders, low enough (0.5 m) to jump over
+  for (const b of BENCHES) {
+    const side = Math.abs(Math.sin(b.rot)) > 0.5
+    boxes.push(box(b.x, b.z, side ? 0.7 : 1.9, side ? 1.9 : 0.7, 0.5, 'bench'))
+  }
   for (const l of LAMP_POSTS) circles.push({ x: l.x, z: l.z, r: 0.22, h: LAMP_H, tag: 'lamp' })
   for (const f of FESTOON_POLES) circles.push({ x: f.x, z: f.z, r: 0.2, h: FESTOON_H, tag: 'pole' })
   return { boxes, circles }

@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 import { HOME, rig, damp } from './shared'
 import { findPath, resolveCircle, AGENT_R } from '../world/collision'
-import { pushOutOfDanger, LIVE_PEOPLE } from '../world/safety'
+import { pushOutOfDanger, LIVE_PEOPLE, dangerZones } from '../world/safety'
 import { input, moveIntent, wantsRun } from '../world/input'
 import { START } from '../world/layout'
 import { audio } from '../audio/audio'
@@ -121,7 +121,7 @@ export default function Child() {
   const cur = useMemo(blankPose, [])
   const tgt = useMemo(blankPose, [])
   const local = useMemo(
-    () => ({ phase: null, t: 0, gait: 0, gaitAmp: 0, speed: 0, yawT: START.yaw, blinkT: 0, nextBlink: 2, mouth: 0, seq: 0, path: null, pathFor: null, pi: 0, running: false }),
+    () => ({ phase: null, t: 0, gait: 0, gaitAmp: 0, speed: 0, yawT: START.yaw, blinkT: 0, nextBlink: 2, mouth: 0, seq: 0, path: null, pathFor: null, pi: 0, running: false, jumpState: 'none', jt: 0, jy: 0, jvy: 0, lastJump: 0, stayHintAt: 0 }),
     [],
   )
   const set = (name) => (el) => (j.current[name] = el)
@@ -188,6 +188,19 @@ export default function Child() {
 
     switch (phase) {
       case 'idle': {
+        // jump (Space / mobile button): idle only, never near a lit cracker
+        if (input.jumpAt > local.lastJump) {
+          local.lastJump = input.jumpAt
+          if (local.jumpState === 'none') {
+            let near = false
+            for (const d of dangerZones) if (Math.hypot(rig.pos.x - d.x, rig.pos.z - d.z) < d.r + 1.5) near = true
+            if (near) st.showHint('hint.stayBack')
+            else {
+              local.jumpState = 'pre'
+              local.jt = 0
+            }
+          }
+        }
         // free movement: keyboard / joystick (camera-relative), or click-to-move
         const camYaw = Math.atan2(rig.pos.x - cam.x, rig.pos.z - cam.z)
         const mag = moveIntent(camYaw, MV)
@@ -254,9 +267,40 @@ export default function Child() {
       default:
         break
     }
-    // walls, buildings, props; other crackers' danger zones are a soft barrier
-    resolveCircle(rig.pos)
+    if (phase !== 'idle') local.lastJump = input.jumpAt // no stale jumps after a sequence
+    // ---- jump physics: anticipation -> gravity arc -> soft landing ----
+    if (local.jumpState === 'pre') {
+      local.jt += dt
+      if (local.jt > 0.12) {
+        local.jumpState = 'air'
+        local.jvy = 3.9
+      }
+    } else if (local.jumpState === 'air') {
+      local.jvy -= 9.8 * dt
+      local.jy += local.jvy * dt
+      if (local.jy <= 0) {
+        local.jy = 0
+        local.jumpState = 'land'
+        local.jt = 0
+        for (let k = 0; k < 7; k++) {
+          const a = (k / 7) * Math.PI * 2
+          fx.puff(rig.pos.x + Math.cos(a) * 0.18, 0.05, rig.pos.z + Math.sin(a) * 0.18, Math.cos(a) * 0.5, 0.15, Math.sin(a) * 0.5, 1.1, 0.12, 1.6, 0.14)
+        }
+      }
+    } else if (local.jumpState === 'land') {
+      local.jt += dt
+      if (local.jt > 0.16) local.jumpState = 'none'
+    }
+    // walls, buildings, props (low ones are cleared while airborne); lit
+    // crackers' danger zones are a soft barrier, in the air too
+    resolveCircle(rig.pos, AGENT_R, null, local.jy > 0.02 ? local.jy : 0)
+    const bx = rig.pos.x
+    const bz = rig.pos.z
     pushOutOfDanger(rig.pos, AGENT_R, current ? current.id : null)
+    if ((Math.abs(bx - rig.pos.x) > 1e-4 || Math.abs(bz - rig.pos.z) > 1e-4) && time > local.stayHintAt) {
+      local.stayHintAt = time + 4
+      st.showHint('hint.stayBack')
+    }
     local.running = speed > 3.2
 
     // camera focus
@@ -352,6 +396,22 @@ export default function Child() {
       lambda = 12
     } else poseIdle(tgt, time)
 
+    // jump poses
+    if (local.jumpState === 'pre' || local.jumpState === 'land') {
+      tgt.thighL = tgt.thighR = -0.55
+      tgt.kneeL = tgt.kneeR = 1.0
+      tgt.spine = 0.25
+      tgt.shLx = tgt.shRx = 0.45
+      lambda = 20
+    } else if (local.jumpState === 'air') {
+      tgt.thighL = tgt.thighR = -0.75
+      tgt.kneeL = tgt.kneeR = 1.25
+      tgt.shLz = 1.15
+      tgt.shRz = -1.15
+      tgt.shLx = tgt.shRx = -0.7
+      tgt.spine = -0.05
+      lambda = 18
+    }
     // head look-at: the cracker while watching, nearby people now and then when idle
     let lookX = null
     let lookZ = null
@@ -402,7 +462,7 @@ export default function Child() {
     hem.current.scale.set(1 + crouch * 0.35, 1 - crouch * 0.45, 1 + crouch * 0.5)
     hem.current.rotation.x = crouch * -0.25
 
-    root.current.position.set(rig.pos.x, 0, rig.pos.z)
+    root.current.position.set(rig.pos.x, local.jy, rig.pos.z)
     root.current.rotation.y = rig.yaw
 
     // props: incense stick, sparkler

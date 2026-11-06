@@ -60,10 +60,11 @@ function pushOutCircle(p, r, c) {
 
 // Resolve a moving circle against statics (+ optional extra circles such as
 // danger zones). Mutates and returns p. Two passes handle corners.
-export function resolveCircle(p, r = AGENT_R, extra = null) {
+// minH: colliders lower than this (e.g. the feet while jumping) are ignored.
+export function resolveCircle(p, r = AGENT_R, extra = null, minH = 0) {
   for (let pass = 0; pass < 2; pass++) {
-    for (let i = 0; i < BOXES.length; i++) pushOutBox(p, r, BOXES[i])
-    for (let i = 0; i < CIRCLES.length; i++) pushOutCircle(p, r, CIRCLES[i])
+    for (let i = 0; i < BOXES.length; i++) if (BOXES[i].h >= minH) pushOutBox(p, r, BOXES[i])
+    for (let i = 0; i < CIRCLES.length; i++) if (CIRCLES[i].h >= minH) pushOutCircle(p, r, CIRCLES[i])
     if (extra) for (let i = 0; i < extra.length; i++) pushOutCircle(p, r, extra[i])
     clampToBounds(p, r)
   }
