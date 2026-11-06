@@ -214,9 +214,23 @@ export function findPath(sx, sz, tx, tz) {
   let [si, sj] = cellOf(sx, sz)
   const [gi, gj] = cellOf(goalP.x, goalP.z)
   if (!G[sj * GW + si]) {
-    const f = nearestFree(sx, sz, AGENT_R + 0.05, 3)
-    if (!f) return null
-    ;[si, sj] = cellOf(f.x, f.z)
+    // start is not on a walkable cell (tight spot): use the nearest walkable cell
+    let best = -1
+    let bd = Infinity
+    for (let dj = -8; dj <= 8; dj++)
+      for (let di = -8; di <= 8; di++) {
+        const ni = si + di
+        const nj = sj + dj
+        if (ni < 0 || nj < 0 || ni >= GW || nj >= GH || !G[nj * GW + ni]) continue
+        const d = di * di + dj * dj
+        if (d < bd) {
+          bd = d
+          best = nj * GW + ni
+        }
+      }
+    if (best < 0) return null
+    si = best % GW
+    sj = (best - si) / GW
   }
   const N = GW * GH
   const g = new Float32Array(N).fill(Infinity)

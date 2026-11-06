@@ -6,7 +6,7 @@ import { useStore, isBusy } from '../store/useStore'
 import { audio } from '../audio/audio'
 import BrandLogo from './BrandLogo'
 
-function IconButton({ label, onClick, disabled, children }) {
+function IconButton({ label, onClick, disabled, children, desktopOnly = false }) {
   return (
     <button
       type="button"
@@ -14,7 +14,7 @@ function IconButton({ label, onClick, disabled, children }) {
       disabled={disabled}
       aria-label={label}
       title={label}
-      className="flex h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-night-900/70 px-3 text-sm font-semibold text-gold-200 backdrop-blur-md transition-all duration-150 hover:border-gold-400/40 hover:bg-night-700/70 focus-visible:outline-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+      className={`${desktopOnly ? 'hidden sm:flex' : 'flex'} h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-night-900/70 px-3 text-sm font-semibold text-gold-200 backdrop-blur-md transition-all duration-150 hover:border-gold-400/40 hover:bg-night-700/70 focus-visible:outline-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40`}
     >
       {children}
     </button>
@@ -37,7 +37,7 @@ export default function TopBar() {
       <div className="glass pointer-events-auto flex min-w-0 items-center gap-2.5 rounded-2xl px-2.5 py-2 md:gap-3 md:px-3">
         <BrandLogo />
         <span className="hidden h-8 w-px shrink-0 bg-gold-400/25 sm:block" aria-hidden="true" />
-        <div className="min-w-0 leading-tight">
+        <div className="hidden min-w-0 leading-tight sm:block">
           <h1 className="truncate font-display text-[15px] font-semibold text-gold-200 md:text-lg">
             {SOCIETY_NAME}
           </h1>
@@ -63,6 +63,7 @@ export default function TopBar() {
           <span className="hidden lg:inline">Clear</span>
         </IconButton>
         <IconButton
+          desktopOnly
           label={ambientOn ? 'Turn ambient sound off' : 'Turn ambient sound on'}
           onClick={() => {
             audio.unlock()

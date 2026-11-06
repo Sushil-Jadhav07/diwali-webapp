@@ -14,7 +14,7 @@ Plan: docs/superpowers/plans/2026-11-06-master-pass.md (world plan with coordina
 - [x] Stage 4 — mandir / rangoli / society decoration polish (mandir + rangolis re-placed by the layout, Lakshmi-puja corner src/scene/LakshmiCorner.jsx, light pools, banner, festoons)
 - [x] Stage 5 — Diwali Bazaar: src/scene/bazaar/Bazaar.jsx (9 stalls from instanced parts, canopies, EN+HI signboards, props, glows, balloons, chaat steam, safety poster), shopkeepers in Residents (arrange goods, wave at the child, react to bangs), patakha counter: E or tap opens/highlights the cracker menu
 - [x] Stage 6 — 44 residents on one instanced rig (19 spectators in 6 chat groups, 9 shopkeepers, 4 bench sitters, 5 balcony watchers, 4 kids at play, 3 bazaar shoppers) with walking legs, A* roaming, danger-zone soft barrier; life director src/life/NpcEvents.jsx (max 2 NPC cracker events, budget-gated, same registry handlers + danger zones; Clear cancels); location-aware ambience (crowd + bazaar beds) gated by the Ambient toggle
-- [ ] Stage 7 — performance/quality setting, mobile, loading screen, CREDITS/README, build + verification (DONE so far: quality tiers Low/Medium/High/Ultra auto + saved, dynamic resolution, loading screen, README/CREDITS updated; LEFT: perf pass, mobile check, final full verification)
+- [x] Stage 7 — quality tiers Low/Medium/High/Ultra (auto + saved, dynamic resolution, tier-driven shadows/vignette/bloom/particle + ambient-firework budgets), loading screen, mobile top bar decluttered (ambient toggle in Settings), blocks made flush with the wall (no trap corridors) + robust A* start, README/CREDITS. Verified: npm run build, npm test (15), world regression (walk/run/collision/camera clamp/auto-walk/minimap/anar/Clear) and stage 4-7 checks (44 residents, bazaar E, NPC event fired, Clear cancels NPC events, quality switch + save), all with no console errors. Perf note: idle 35-60 fps at DPR 1 on Intel UHD 630 depending on active effects; deeper perf work is FINAL PASS F10.
 
 ## QUEUED: FINAL PASS (user, 2026-11-06) — start only after every MASTER PASS stage above is checked
 Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
@@ -47,7 +47,7 @@ Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
 - [x] 6 More crackers: 16 total in the sidebar (phuljhadi, anar, anardeluxe, colorshower, chakri, chakrideluxe, snake, asynk, rocket, rocketbundle, skyshot, cake, bijli, sutli, ladi, poppop), categorised scrollable sidebar (Hand-held, Ground, Sky, Sound)
 
 ## In progress
-MASTER PASS stage 7 (perf pass, mobile check, final verification). Then the queued FINAL PASS.
+FINAL PASS F1 (full-screen layout + compact sidebar + language switcher; quality tiers already exist).
 
 ## Next step
 Optional polish only (see LATER). If continuing, run the scratchpad-style UI verification again after any change (fire every [data-cracker] button, check the phase order via a store subscription, hammer buttons, check Replay/Clear/sound).

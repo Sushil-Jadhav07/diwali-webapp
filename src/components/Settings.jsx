@@ -19,6 +19,8 @@ export default function Settings() {
   const tier = useStore((s) => s.tier)
   const setQuality = useStore((s) => s.setQuality)
   const setTier = useStore((s) => s.setTier)
+  const ambientOn = useStore((s) => s.ambientOn)
+  const toggleAmbient = useStore((s) => s.toggleAmbient)
   const choose = (q) => {
     setQuality(q)
     if (q !== 'auto') setTier(q)
@@ -62,6 +64,10 @@ export default function Settings() {
               ))}
             </div>
             <p className="mt-2 text-[11px] text-white/55">In use: {TIERS[tier]?.label || tier}. Auto picks a tier for this device.</p>
+            <label className="mt-3 flex min-h-10 cursor-pointer items-center justify-between rounded-lg bg-white/[0.04] px-3 text-sm text-gold-200">
+              Ambient sound
+              <input type="checkbox" checked={ambientOn} onChange={toggleAmbient} className="h-4 w-4 accent-amber-400" aria-label="Ambient sound" />
+            </label>
           </motion.div>
         )}
       </AnimatePresence>

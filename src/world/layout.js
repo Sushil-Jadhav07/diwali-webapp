@@ -19,10 +19,10 @@ export const GATE = { x: 0, z: WORLD.maxZ, halfW: 3.2, pillarH: 3.4 }
 // ---------- apartment blocks (expanded into facade segments for Houses.jsx) ----------
 // facing: +x | -x | +z | -z (direction of the main facade)
 export const BLOCKS = [
-  { id: 'A', name: 'Block A', minX: -35, maxX: -25, minZ: -26, maxZ: 2, facing: '+x', floors: 4, color: '#e8b98a' },
-  { id: 'B', name: 'Block B', minX: -18, maxX: 18, minZ: -29, maxZ: -21, facing: '+z', floors: 5, color: '#9cc6e8' },
-  { id: 'C', name: 'Block C', minX: 25, maxX: 35, minZ: -26, maxZ: 2, facing: '-x', floors: 4, color: '#e59aa4' },
-  { id: 'D', name: 'Block D', minX: 14, maxX: 35, minZ: 21, maxZ: 29, facing: '-z', floors: 4, color: '#e8cf7c' },
+  { id: 'A', name: 'Block A', minX: -36, maxX: -25, minZ: -26, maxZ: 2, facing: '+x', floors: 4, color: '#e8b98a' },
+  { id: 'B', name: 'Block B', minX: -18, maxX: 18, minZ: -30, maxZ: -21, facing: '+z', floors: 5, color: '#9cc6e8' },
+  { id: 'C', name: 'Block C', minX: 25, maxX: 36, minZ: -26, maxZ: 2, facing: '-x', floors: 4, color: '#e59aa4' },
+  { id: 'D', name: 'Block D', minX: 14, maxX: 36, minZ: 21, maxZ: 30, facing: '-z', floors: 4, color: '#e8cf7c' },
 ]
 
 const ROT = { '+z': 0, '+x': Math.PI / 2, '-x': -Math.PI / 2, '-z': Math.PI }
