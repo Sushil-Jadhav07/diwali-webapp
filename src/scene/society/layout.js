@@ -1,10 +1,11 @@
 import * as THREE from 'three'
+import * as W from '../../world/layout.js'
 
 // Shared scenery layout (mandir, rangoli, boundary wall, gate, lamps).
 // Keep-clear zones: |x| < 3.2 for z in [-4.2, 4.8] (child path + cracker spots);
 // residents zone |x| in [4.5, 8.8], z in [-6.5, 7.6] (only the mandir + tree there).
 
-export const MANDIR = { x: -6.3, z: -5.4, rot: 0.85 } // faces the courtyard centre
+export const MANDIR = W.MANDIR // faces the Cracker Ground (world/layout.js)
 
 // World point from mandir-local coordinates (local +Z = temple front).
 export function mandirPoint(lx, ly, lz, out = new THREE.Vector3()) {
@@ -36,12 +37,12 @@ export const MANDIR_PLINTH_CORNERS = [
   [1.2, 0.45, -1.3],
 ]
 
-export const RANGOLI_MAIN = { x: 0, z: -5.75, r: 1.85 }
-export const RANGOLI_SMALL = { x: 3.4, z: 3.6, r: 0.9 }
+export const RANGOLI_MAIN = W.RANGOLI_MAIN
+export const RANGOLI_SMALL = W.RANGOLI_SMALL
 
 // Boundary wall along the front (z = WALL.z) with a centred gate opening.
-export const WALL = { z: 12.5, h: 1.8, t: 0.26, xMax: 15.6, gateX: 2.35, pillarHalf: 0.36 }
-export const GATE = { pillarH: 3.0, archR: 2.35, archTube: 0.13 }
+export const WALL = { z: W.WORLD.maxZ, h: W.WALL_H, t: W.WALL_T, xMax: W.WORLD.maxX, gateX: W.GATE.halfW + 0.36, pillarHalf: 0.36 }
+export const GATE = { pillarH: W.GATE.pillarH, archR: W.GATE.halfW + 0.36, archTube: 0.14 }
 
 // Points along the gate arch (semicircle from left pillar top to right pillar top).
 export function gateArchPoints(n, lift = 0, out = []) {
@@ -52,12 +53,5 @@ export function gateArchPoints(n, lift = 0, out = []) {
   return out
 }
 
-// Lamp posts: along x = +/-9 and on the gate pillars.
-export const LAMP_POSTS = [-6.6, -1.2, 4.4, 9.6].flatMap((z) => [
-  { x: -9.0, z, dir: 1 },
-  { x: 9.0, z, dir: -1 },
-])
-export const LAMP_H = 4.1
-
-// Parking strip (z in [8.2, 11.8]), keep the gate path |x| < 2.5 clear.
-export const PARKING_Z = 10.9
+export const LAMP_POSTS = W.LAMP_POSTS
+export const LAMP_H = W.LAMP_H

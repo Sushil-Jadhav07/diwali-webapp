@@ -75,3 +75,32 @@ export const SparkleIcon = (p) => (
     <path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7L19 16z" />
   </Svg>
 )
+
+export const MusicIcon = (p) => (
+  <Svg {...p}>
+    <path d="M9 18V5l11-2v13" />
+    <circle cx="6.5" cy="18" r="2.5" />
+    <circle cx="17.5" cy="16" r="2.5" />
+  </Svg>
+)
+
+export const MusicOffIcon = (p) => (
+  <Svg {...p}>
+    <path d="M9 18V9M9 5l11-2v9" />
+    <circle cx="6.5" cy="18" r="2.5" />
+    <path d="M3 3l18 18" />
+  </Svg>
+)
+
+export const PinIcon = (p) => (
+  <Svg {...p}>
+    <path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z" />
+    <circle cx="12" cy="10" r="2.4" />
+  </Svg>
+)
+
+export const BoltIcon = (p) => (
+  <Svg {...p}>
+    <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12L13 2z" />
+  </Svg>
+)

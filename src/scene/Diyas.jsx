@@ -30,7 +30,6 @@ export const DIYA_POSITIONS = (() => {
   for (let i = 0; i < 20; i++) {
     const a = (i / 20) * Math.PI * 2
     const z = RANGOLI_MAIN.z + Math.sin(a) * R
-    if (z < -7.45) continue
     list.push(new THREE.Vector3(RANGOLI_MAIN.x + Math.cos(a) * R, 0, z))
   }
   // ring around the small rangoli
@@ -45,7 +44,7 @@ export const DIYA_POSITIONS = (() => {
   // mandir steps, plinth edge and porch
   for (const [x, y, z] of MANDIR_DIYAS) list.push(mandirPoint(x, y, z))
   // on top of the front boundary wall
-  for (let x = 3.3; x <= 9.4; x += 1.25) {
+  for (let x = WALL.gateX + 1; x <= WALL.gateX + 9; x += 1.25) {
     list.push(new THREE.Vector3(x, WALL.h + 0.08, WALL.z))
     list.push(new THREE.Vector3(-x, WALL.h + 0.08, WALL.z))
   }

@@ -72,7 +72,7 @@ export default function CrackerStage() {
         if (!Model) return null
         return (
           <group key={s.id} position={[s.spot[0], 0, s.spot[1]]}>
-            <Model burnt spot={s.spot} />
+            <Model burnt spot={s.spot} from={s.from} />
           </group>
         )
       })}

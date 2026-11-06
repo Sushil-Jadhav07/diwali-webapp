@@ -1,5 +1,19 @@
 # PROGRESS — Diwali Cracker Playground
 
+## MASTER PASS — "Asynk Family Residency" (user, 2026-11-06; supersedes earlier upgrade passes)
+Plan: docs/superpowers/plans/2026-11-06-master-pass.md (world plan with coordinates, file map, stages).
+- [x] Stage 1 — bounded society layout, collision, free movement (WASD / click-to-move A* / joystick), follow camera + collision, minimap, places
+  - World: src/world/layout.js (72 x 60 m = 4320 m^2, ~9x the old courtyard), collision.js (AABB/circle colliders, 0.5 m A* grid, camera segment test), safety.js (danger zones, placement/retreat), input.js (keys/joystick/nav). Tests: tests/world.test.mjs (npm test, 10 pass).
+  - Scenery re-laid from the layout: 4 apartment blocks (Houses = facade segments), perimeter wall with fairy lights + pots + garlands, closed decorated gate + "Asynk Family Residency" arch + brass plaque + welcome signboard, security cabin + watchman, lanes, Cracker Ground with pads/markings, entrance rangoli, festoon poles, lamp posts, parked cars/scooters, water tank, banner "Happy Diwali from Asynk Family Residency", backdrop (skyline, hills, tree ring, distant fireworks), instanced trees.
+  - UI: society name in top bar, Places menu (walk / fast travel), SVG minimap (player, danger zones, people; click to walk), hint toasts, mobile joystick + Run, Ambient toggle, Clear always enabled.
+  - Verified (headless Chrome): W/Shift walk+run, strafe, gate/wall stop the child (z <= 29.08) and the camera (clamped inside), auto-walk to mandir arrives, minimap walk arrives, anar from a new spot runs the full phase order, Clear mid-sequence resets (sparks 0, flash 0), all 16 crackers OK, no console errors.
+- [ ] Stage 2 — character + state machine from any spot (placement validation, danger rings, retreat), Replay disabled while busy, Clear always
+- [ ] Stage 3 — data-driven cracker registry + engine; Group A sky, B ground, C sound, D toy cap gun (~30 total)
+- [ ] Stage 4 — mandir / rangoli / society decoration polish
+- [ ] Stage 5 — Diwali Bazaar (9 stalls, shopkeepers, patakha-shop interaction)
+- [ ] Stage 6 — 25-40 residents, life director, NPC cracker events, ambient sound + toggle
+- [ ] Stage 7 — performance/quality setting, mobile, loading screen, CREDITS/README, build + verification
+
 ## Milestones
 - [x] M1 — Vite + React + Tailwind setup, 3D night scene, sidebar UI, orbit/follow camera
 - [x] M2 — Child model, animations, state machine, walking & placing flow
@@ -18,7 +32,7 @@
 - [x] 6 More crackers: 16 total in the sidebar (phuljhadi, anar, anardeluxe, colorshower, chakri, chakrideluxe, snake, asynk, rocket, rocketbundle, skyshot, cake, bijli, sutli, ladi, poppop), categorised scrollable sidebar (Hand-held, Ground, Sky, Sound)
 
 ## In progress
-Nothing. All upgrade-pass items are done.
+MASTER PASS stage 2 (danger rings done; head look-at; NPC keep-out comes with stage 6).
 
 ## Next step
 Optional polish only (see LATER). If continuing, run the scratchpad-style UI verification again after any change (fire every [data-cracker] button, check the phase order via a store subscription, hammer buttons, check Replay/Clear/sound).
@@ -39,6 +53,7 @@ Optional polish only (see LATER). If continuing, run the scratchpad-style UI ver
 - Audio checked offline: all 10 synthesised sounds render (no NaN, peaks 0.5-0.85, <=121 ms each to generate). Not listened to by ear (headless).
 
 ## Known bugs
+- Perf: idle 35-41 fps at DPR 1 on Intel UHD 630 in the 9x world (was 52-55). To fix in stage 7 (string-light/diya/balcony instancing costs, shadows, quality setting).
 - claude-mem MCP worker was unreachable on 2026-11-06 ("worker could not complete this request"), so session notes live only in this file.
 - Console warning "THREE.Clock deprecated" comes from inside @react-three/fiber 9 (not our code); harmless.
 

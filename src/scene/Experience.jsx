@@ -19,6 +19,10 @@ import Child from './Child'
 import FxLayer from '../crackers/FxLayer'
 import CrackerStage from '../crackers/CrackerStage'
 import { useState } from 'react'
+import Backdrop from './Backdrop'
+import ClickToMove from './ClickToMove'
+import DangerRings from './DangerRings'
+import { START } from '../world/layout'
 
 export default function Experience() {
   // Start at 1x and raise resolution only when the GPU has headroom (cap 2).
@@ -28,13 +32,13 @@ export default function Experience() {
     <Canvas
       shadows="percentage"
       dpr={dpr}
-      camera={{ position: [0, 2.7, 9.6], fov: 50, near: 0.1, far: 600 }}
+      camera={{ position: [START.x, 3.0, START.z + 6.2], fov: 50, near: 0.1, far: 700 }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping }}
       onCreated={(state) => {
         const { scene } = state
         if (import.meta.env.DEV) window.__r3f = state
         scene.background = new THREE.Color('#0b0a24')
-        scene.fog = new THREE.FogExp2('#14102e', 0.022)
+        scene.fog = new THREE.FogExp2('#14102e', 0.0105)
       }}
     >
       <PerformanceMonitor
@@ -52,6 +56,9 @@ export default function Experience() {
         <StringLights />
         <Diyas />
         <Trees />
+        <Backdrop />
+        <ClickToMove />
+        <DangerRings />
         <Society />
         <Mandir />
         <Residents />

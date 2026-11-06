@@ -2,25 +2,11 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mulberry32 } from './shared'
 import { makePlasterTexture } from './textures'
+import { SEGMENTS } from '../world/layout'
 
-// Courtyard houses: back row facing +Z, left row facing +X, right row facing -X.
-const WALL_COLORS = ['#e8b98a', '#7fb7b0', '#e59aa4', '#e8cf7c', '#b7a3d6', '#9cc6e8', '#f0a868']
-
-export const HOUSES = (() => {
-  
-  const list = []
-  const back = [-9, -3, 3, 9]
-  back.forEach((x, i) =>
-    list.push({ x, z: -11, rot: 0, w: 6.02, d: 6, floors: [2, 3, 2, 2][i], color: WALL_COLORS[i] }),
-  )
-  ;[-4.2, 1.6, 7.4].forEach((z, i) =>
-    list.push({ x: -12.6, z, rot: Math.PI / 2, w: 5.4, d: 6, floors: [3, 2, 2][i], color: WALL_COLORS[(i + 4) % 7] }),
-  )
-  ;[-4.2, 1.6, 7.4].forEach((z, i) =>
-    list.push({ x: 12.6, z, rot: -Math.PI / 2, w: 5.4, d: 6, floors: [2, 3, 2][i], color: WALL_COLORS[(i + 2) % 7] }),
-  )
-  return list
-})()
+// Apartment blocks of Asynk Family Residency, expanded into facade segments
+// (world/layout.js). Each segment: { x, z, rot, w, d, floors, color, tone }.
+export const HOUSES = SEGMENTS
 
 const FLOOR_H = 3
 
@@ -114,7 +100,7 @@ function HouseBody({ h, plaster }) {
     <group position={[h.x, 0, h.z]} rotation-y={h.rot}>
       <mesh position={[0, height / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[h.w, height, h.d]} />
-        <meshStandardMaterial color={h.color} map={tex} roughness={0.92} />
+        <meshStandardMaterial color={h.tone ? new THREE.Color(h.color).offsetHSL(0, -0.04, 0.05) : h.color} map={tex} roughness={0.92} />
       </mesh>
       {/* parapet */}
       <mesh position={[0, height + 0.25, 0]} castShadow>

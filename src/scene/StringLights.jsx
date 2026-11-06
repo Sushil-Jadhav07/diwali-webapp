@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { HOUSES, housePoint } from './Houses'
 import { mulberry32 } from './shared'
+import { FESTOON_POLES, FESTOON_H, LAMP_POSTS, LAMP_H, BAZAAR } from '../world/layout'
 
 const WARM = [1.0, 0.72, 0.32]
 const MULTI = [
@@ -38,33 +39,34 @@ export default function StringLights() {
     }
     const V = (x, y, z) => new THREE.Vector3(x, y, z)
 
-    // across the courtyard, side-house to side-house
-    for (const z of [-3.2, 1.0, 5.2]) strand(catenary(V(-9.55, 5.7, z), V(9.55, 5.7, z), 1.5, 0.36, []), 'warm', () => WARM)
-    // diagonals from the back houses
-    const diag = [
-      [V(-6, 5.8, -7.95), V(-9.55, 5.4, 3.5)],
-      [V(6, 5.8, -7.95), V(9.55, 5.4, 3.5)],
-      [V(0, 5.9, -7.95), V(-9.55, 5.2, -0.8)],
-      [V(0, 5.9, -7.95), V(9.55, 5.2, -0.8)],
-    ]
-    for (const [a, b] of diag) strand(catenary(a, b, 1.2, 0.4, []), 'chase', (i) => MULTI[i % MULTI.length])
+    // festoons around the Cracker Ground, pole to pole, plus two crossing strands
+    const P = FESTOON_POLES.map((f) => V(f.x, FESTOON_H - 0.1, f.z))
+    for (let i = 0; i < P.length; i++) strand(catenary(P[i], P[(i + 1) % P.length], 0.7, 0.4, []), 'chase', (k) => MULTI[(k + i) % MULTI.length])
+    strand(catenary(P[0], P[4], 2.2, 0.42, []), 'warm', () => WARM)
+    strand(catenary(P[2], P[6], 2.2, 0.42, []), 'warm', () => WARM)
+    // zig-zag over the main lane between lamp posts
+    const lane = LAMP_POSTS.filter((l) => Math.abs(l.x) < 5).sort((a, b) => a.z - b.z || a.x - b.x)
+    for (let i = 0; i + 1 < lane.length; i++) {
+      const A = lane[i]
+      const B = lane[i + 1]
+      strand(catenary(V(A.x, LAMP_H - 0.3, A.z), V(B.x, LAMP_H - 0.3, B.z), 0.5, 0.36, []), 'twinkle', () => WARM)
+    }
+    // across the bazaar lane, canopy to canopy
+    for (let x = BAZAAR.minX + 1.4; x < BAZAAR.maxX - 1; x += 2.8)
+      strand(catenary(V(x, 3.5, BAZAAR.laneZ - 3.1), V(x + 1.2, 3.5, BAZAAR.laneZ + 3.1), 0.45, 0.34, []), 'chase', (k) => MULTI[k % MULTI.length])
 
-    // curtain (jhalar) lights hanging from the back-row parapets
-    for (const h of HOUSES.filter((h) => h.rot === 0)) {
+    // curtain (jhalar) lights + parapet chasers on every block segment
+    for (const h of HOUSES) {
       const top = h.floors * 3 + 0.05
-      for (let k = 0; k < 9; k++) {
-        const lx = (k / 8 - 0.5) * (h.w - 0.6)
+      for (let k = 0; k < 7; k++) {
+        const lx = (k / 6 - 0.5) * (h.w - 0.8)
         const len = 2.2 + r() * 0.8
         const pts = []
-        for (let j = 0; j * 0.26 < len; j++) pts.push(housePoint(h, lx, top - j * 0.26, 0.16))
+        for (let j = 0; j * 0.28 < len; j++) pts.push(housePoint(h, lx, top - j * 0.28, 0.16))
         strand(pts, 'twinkle', () => WARM)
       }
-    }
-    // parapet edge lights on the side houses
-    for (const h of HOUSES.filter((h) => h.rot !== 0)) {
-      const y = h.floors * 3 + 0.1
       const pts = []
-      for (let k = 0; k <= 16; k++) pts.push(housePoint(h, (k / 16 - 0.5) * h.w, y, 0.14))
+      for (let k = 0; k <= 14; k++) pts.push(housePoint(h, (k / 14 - 0.5) * h.w, top + 0.05, 0.14))
       strand(pts, 'chase', (i) => MULTI[(i + 2) % MULTI.length])
     }
     return { bulbs, wires }
@@ -109,9 +111,24 @@ export default function StringLights() {
       <instancedMesh ref={ref} args={[geo, null, data.bulbs.length]}>
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
+      <Poles />
       <lineSegments geometry={wireGeo}>
         <lineBasicMaterial color="#120c08" />
       </lineSegments>
     </group>
   )
+}
+
+const poleGeo = new THREE.CylinderGeometry(0.06, 0.08, FESTOON_H, 6)
+poleGeo.translate(0, FESTOON_H / 2, 0)
+const poleMat = new THREE.MeshStandardMaterial({ color: '#a07a44', roughness: 0.9 })
+function Poles() {
+  const ref = useRef()
+  useLayoutEffect(() => {
+    const m = new THREE.Matrix4()
+    FESTOON_POLES.forEach((f, i) => ref.current.setMatrixAt(i, m.makeTranslation(f.x, 0, f.z)))
+    ref.current.instanceMatrix.needsUpdate = true
+    ref.current.computeBoundingSphere()
+  }, [])
+  return <instancedMesh ref={ref} args={[poleGeo, poleMat, FESTOON_POLES.length]} />
 }

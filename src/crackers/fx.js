@@ -463,6 +463,9 @@ export const fx = {
   },
 
   clear() {
+    this.skyGlow = 0
+    this.flash = 0
+    this.shake = 0
     if (!this.ready) return
     this.sparks.clear()
     this.smoke.clear()
@@ -482,3 +485,5 @@ export function randDir(out) {
   out[2] = s * Math.sin(th)
   return out
 }
+
+if (import.meta.env?.DEV && typeof window !== 'undefined') window.__fx = fx

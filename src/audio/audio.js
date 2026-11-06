@@ -47,13 +47,14 @@ export const audio = {
       Howler.mute(!useStore.getState().soundOn)
       useStore.subscribe((s, prev) => {
         if (s.soundOn !== prev.soundOn) Howler.mute(!s.soundOn)
+        if (s.ambientOn !== prev.ambientOn && howls.ambience) howls.ambience.fade(howls.ambience.volume(), s.ambientOn ? SPECS.ambience.volume : 0, 600)
       })
       // Render the most-used sounds now; the rest lazily on first use.
       ensure('ambience')
       ensure('hiss')
       ensure('strike')
       const amb = howls.ambience.play()
-      howls.ambience.fade(0, SPECS.ambience.volume, 2500, amb)
+      howls.ambience.fade(0, useStore.getState().ambientOn ? SPECS.ambience.volume : 0, 2500, amb)
       // Pre-render remaining sounds when the browser is idle.
       const rest = Object.keys(SPECS).filter((n) => !howls[n])
       const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 60))
@@ -85,6 +86,11 @@ export const audio = {
     } catch {
       return null
     }
+  },
+
+  // Stop every one-shot / loop except the ambient bed (used by Clear).
+  stopAll() {
+    for (const [name, h] of Object.entries(howls)) if (name !== 'ambience' && !name.startsWith('amb')) h.stop()
   },
 
   stop(name, id) {

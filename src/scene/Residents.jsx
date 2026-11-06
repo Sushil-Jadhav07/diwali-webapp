@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 import { fx } from '../crackers/fx'
 import { rig, mulberry32, damp } from './shared'
+import { LIVE_PEOPLE } from '../world/safety'
 
 // ---------------------------------------------------------------------------
 // Residents of the society: 19 low-detail procedural people in small groups.
@@ -159,8 +160,14 @@ function buildPeople() {
     const hair = elder ? (rnd() > 0.5 ? '#b9b4aa' : '#8f8a82') : rnd() > 0.3 ? '#15100c' : '#2b1a10'
     const top = r.top
     const bottom = r.bottom || top
+    // stage-1 layout: spectators stand along the east/west edges of the Cracker Ground
+    const x = Math.sign(r.x) * (16.8 + (Math.abs(r.x) - 4.5) * 0.75)
+    const z = r.z * 1.3 - 5
+    LIVE_PEOPLE[i] = { x, z }
     return {
       ...r,
+      x,
+      z,
       i,
       kid,
       elder,

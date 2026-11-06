@@ -15,10 +15,10 @@ const crackerGeo = new THREE.CylinderGeometry(0.011, 0.011, 0.055, 8)
 const redPaper = new THREE.MeshStandardMaterial({ color: '#c81e1e', roughness: 0.7 })
 const fuseMat = new THREE.MeshStandardMaterial({ color: '#6b5b3e', roughness: 0.9 })
 
-// chain layout (local to the spot): points running away from HOME
-function layout(spot) {
-  const dx = spot[0] - HOME.x
-  const dz = spot[1] - HOME.z
+// chain layout (local to the spot): points running away from where the child stood
+function layout(spot, from) {
+  const dx = spot[0] - (from ? from[0] : HOME.x)
+  const dz = spot[1] - (from ? from[1] : HOME.z)
   const L = Math.hypot(dx, dz) || 1
   const ux = dx / L
   const uz = dz / L
@@ -33,9 +33,9 @@ function layout(spot) {
   return { pts, yaw: Math.atan2(ux, uz) }
 }
 
-export function LadiModel({ spot = [0, 0], hidden }) {
+export function LadiModel({ spot = [0, 0], from, hidden }) {
   const ref = useRef()
-  const { pts, yaw } = useMemo(() => layout(spot), [spot])
+  const { pts, yaw } = useMemo(() => layout(spot, from), [spot, from])
   const fuseGeo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 64, 0.004, 4, false), [pts])
   useLayoutEffect(() => {
     const m = new THREE.Matrix4()
@@ -66,7 +66,7 @@ export default function Ladi({ c }) {
   const inst = useRef()
   const R = useCrackerResources()
   const [x, z] = c.spot
-  const { pts, yaw } = useMemo(() => layout(c.spot), [c.spot])
+  const { pts, yaw } = useMemo(() => layout(c.spot, c.from), [c.spot, c.from])
   const fuseGeo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 64, 0.004, 4, false), [pts])
   const FUSE = 2.6
   const times = useMemo(() => {
@@ -148,9 +148,9 @@ export default function Ladi({ c }) {
   )
 }
 
-export function LadiScraps({ spot }) {
+export function LadiScraps({ spot, from }) {
   // scraps scattered along the chain
-  const { pts } = useMemo(() => layout(spot), [spot])
+  const { pts } = useMemo(() => layout(spot, from), [spot, from])
   const mid = pts[Math.floor(N / 2)]
   return (
     <group position={[mid.x, 0, mid.z]}>

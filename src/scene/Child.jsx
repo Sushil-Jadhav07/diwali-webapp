@@ -4,6 +4,10 @@ import * as THREE from 'three'
 import { useStore } from '../store/useStore'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 import { HOME, rig, damp } from './shared'
+import { findPath, resolveCircle, AGENT_R } from '../world/collision'
+import { pushOutOfDanger } from '../world/safety'
+import { input, moveIntent, wantsRun } from '../world/input'
+import { START } from '../world/layout'
 import { audio } from '../audio/audio'
 import { fx } from '../crackers/fx'
 import { M, THIGH, SHIN, FOOT_H, Torso, Hem, Leg, Arm, Head } from './childBody'
@@ -98,6 +102,7 @@ function poseCelebrate(p, t) {
 }
 
 const angleDiff = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a))
+const MV = { x: 0, z: 0 }
 
 export default function Child() {
   const root = useRef()
@@ -114,7 +119,7 @@ export default function Child() {
   const cur = useMemo(blankPose, [])
   const tgt = useMemo(blankPose, [])
   const local = useMemo(
-    () => ({ phase: null, t: 0, gait: 0, gaitAmp: 0, speed: 0, yawT: Math.PI, blinkT: 0, nextBlink: 2, mouth: 0 }),
+    () => ({ phase: null, t: 0, gait: 0, gaitAmp: 0, speed: 0, yawT: START.yaw, blinkT: 0, nextBlink: 2, mouth: 0, seq: 0, path: null, pathFor: null, pi: 0, running: false }),
     [],
   )
   const set = (name) => (el) => (j.current[name] = el)
@@ -134,50 +139,87 @@ export default function Child() {
     const t = local.t
 
     // ----- director: movement + phase transitions -----
-    const spotX = current ? current.spot[0] : 0
-    const spotZ = current ? current.spot[1] : 0
+    const spotX = current ? current.spot[0] : rig.pos.x
+    const spotZ = current ? current.spot[1] : rig.pos.z
     let moving = false
     let speed = 0
+    // a new sequence (or a Clear) resets per-sequence navigation
+    const seqId = current ? current.id : 0
+    if (seqId !== local.seq) {
+      local.seq = seqId
+      local.pathFor = null
+    }
     const goTo = (x, z, spd) => {
       const dx = x - rig.pos.x
       const dz = z - rig.pos.z
       const d = Math.hypot(dx, dz)
-      if (d < 0.04) return true
+      if (d < 0.06) return true
       local.yawT = Math.atan2(dx, dz)
       // slow down while turning sharply
       const turn = Math.abs(angleDiff(rig.yaw, local.yawT))
       const s = spd * Math.max(0.25, 1 - turn / 1.6) * Math.min(1, d / 0.35 + 0.3)
-      const step = Math.min(d, s * dt)
-      rig.pos.x += (dx / d) * step
-      rig.pos.z += (dz / d) * step
+      const stepLen = Math.min(d, s * dt)
+      rig.pos.x += (dx / d) * stepLen
+      rig.pos.z += (dz / d) * stepLen
       moving = true
       speed = s
+      return false
+    }
+    // follow an A* path to (tx, tz); returns true on arrival
+    const follow = (key, tx, tz, spd) => {
+      if (local.pathFor !== key) {
+        local.path = findPath(rig.pos.x, rig.pos.z, tx, tz) || [{ x: tx, z: tz }]
+        local.pathFor = key
+        local.pi = 0
+      }
+      const w = local.path[local.pi]
+      if (goTo(w.x, w.z, spd)) {
+        if (local.pi < local.path.length - 1) local.pi++
+        else return true
+      }
       return false
     }
     const face = (x, z) => {
       local.yawT = Math.atan2(x - rig.pos.x, z - rig.pos.z)
     }
-    // approach point: 0.55 m in front of the spot, on the home side
-    const toHomeX = HOME.x - spotX
-    const toHomeZ = HOME.z - spotZ
-    const toHomeL = Math.hypot(toHomeX, toHomeZ) || 1
-    const ux = toHomeX / toHomeL
-    const uz = toHomeZ / toHomeL
+    const cam = state.camera.position
 
     switch (phase) {
+      case 'idle': {
+        // free movement: keyboard / joystick (camera-relative), or click-to-move
+        const camYaw = Math.atan2(rig.pos.x - cam.x, rig.pos.z - cam.z)
+        const mag = moveIntent(camYaw, MV)
+        const spd = wantsRun() ? RUN_SPEED : WALK_SPEED
+        if (mag > 0) {
+          input.nav = null
+          local.yawT = Math.atan2(MV.x, MV.z)
+          const s = spd * mag
+          rig.pos.x += MV.x * s * dt
+          rig.pos.z += MV.z * s * dt
+          moving = true
+          speed = s
+        } else if (input.nav) {
+          const n = input.nav
+          const w = n.path[n.i]
+          // long auto-walks (places / map) jog; short ones walk
+          let left = Math.hypot(w.x - rig.pos.x, w.z - rig.pos.z)
+          for (let k = n.i + 1; k < n.path.length; k++) left += Math.hypot(n.path[k].x - n.path[k - 1].x, n.path[k].z - n.path[k - 1].z)
+          if (goTo(w.x, w.z, left > 8 ? RUN_SPEED : spd)) {
+            if (n.i < n.path.length - 1) n.i++
+            else input.nav = null
+          }
+        }
+        break
+      }
       case 'walkingTo': {
-        const ax = def?.held ? spotX : spotX + ux * 0.55
-        const az = def?.held ? spotZ : spotZ + uz * 0.55
-        if (goTo(ax, az, WALK_SPEED)) st.advance('walkingTo')
+        if (follow('approach', current.approach[0], current.approach[1], WALK_SPEED)) st.advance('walkingTo')
         break
       }
       case 'placing': {
-        // the sparkler is held facing home (towards the camera) so its glow lights the face
-        if (def?.held) face(rig.pos.x + ux, rig.pos.z + uz)
+        // a held sparkler faces the camera so its glow lights the face
+        if (def?.held) face(cam.x, cam.z)
         else face(spotX, spotZ)
-        if (t > 0.6 && !rt.placed) {
-          rt.placed = true
-        }
+        if (t > 0.6 && !rt.placed) rt.placed = true
         if (t > (def?.held ? 0.9 : 1.3)) st.advance('placing')
         break
       }
@@ -192,24 +234,13 @@ export default function Child() {
       case 'retreating': {
         if (def?.held) {
           // step back slowly, keeping the sparkler out in front
-          const bx = spotX + ux * def.retreat
-          const bz = spotZ + uz * def.retreat
-          const dx = bx - rig.pos.x
-          const dz = bz - rig.pos.z
-          const d = Math.hypot(dx, dz)
-          if (d > 0.03) {
-            const step = Math.min(d, 0.7 * dt)
-            rig.pos.x += (dx / d) * step
-            rig.pos.z += (dz / d) * step
-            moving = true
-            speed = 0.7
-          } else st.advance('retreating')
-          face(rig.pos.x + ux * 3, rig.pos.z + uz * 3)
-        } else if (goTo(HOME.x, HOME.z, RUN_SPEED)) st.advance('retreating')
+          if (goTo(current.retreat[0], current.retreat[1], 0.7)) st.advance('retreating')
+          face(cam.x, cam.z)
+        } else if (follow('retreat', current.retreat[0], current.retreat[1], RUN_SPEED)) st.advance('retreating')
         break
       }
       case 'waiting': {
-        if (def?.held) face(rig.pos.x + ux, rig.pos.z + uz)
+        if (def?.held) face(cam.x, cam.z)
         else face(spotX, spotZ)
         if (rt.done || t > 30) st.advance('waiting')
         break
@@ -221,6 +252,10 @@ export default function Child() {
       default:
         break
     }
+    // walls, buildings, props; other crackers' danger zones are a soft barrier
+    resolveCircle(rig.pos)
+    pushOutOfDanger(rig.pos, AGENT_R, current ? current.id : null)
+    local.running = speed > 2.2
 
     // camera focus
     rig.focusPoint.set(spotX, 0, spotZ)
@@ -233,7 +268,7 @@ export default function Child() {
 
     // ----- pose targets -----
     for (const k of JOINTS) tgt[k] = 0
-    const running = phase === 'retreating' && !def?.held
+    const running = (phase === 'retreating' && !def?.held) || local.running
     local.gaitAmp = damp(local.gaitAmp, running ? 1 : 0, 6, dt)
     if (moving) {
       const stride = running ? 1.35 : 0.85

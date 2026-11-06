@@ -1,4 +1,6 @@
-import { ReplayIcon, TrashIcon, SoundOnIcon, SoundOffIcon } from './Icons'
+import { ReplayIcon, TrashIcon, SoundOnIcon, SoundOffIcon, MusicIcon, MusicOffIcon } from './Icons'
+import Places from './Places'
+import { SOCIETY_NAME } from '../world/layout'
 import { useStore, isBusy } from '../store/useStore'
 import { audio } from '../audio/audio'
 import BrandLogo from './BrandLogo'
@@ -21,11 +23,12 @@ function IconButton({ label, onClick, disabled, children }) {
 export default function TopBar() {
   const phase = useStore((s) => s.phase)
   const lastType = useStore((s) => s.lastType)
-  const spent = useStore((s) => s.spent.length)
   const soundOn = useStore((s) => s.soundOn)
   const toggleSound = useStore((s) => s.toggleSound)
   const replay = useStore((s) => s.replay)
   const clearScene = useStore((s) => s.clearScene)
+  const ambientOn = useStore((s) => s.ambientOn)
+  const toggleAmbient = useStore((s) => s.toggleAmbient)
   const busy = isBusy(phase)
 
   return (
@@ -35,10 +38,10 @@ export default function TopBar() {
         <span className="hidden h-8 w-px shrink-0 bg-gold-400/25 sm:block" aria-hidden="true" />
         <div className="min-w-0 leading-tight">
           <h1 className="truncate font-display text-[15px] font-semibold text-gold-200 md:text-lg">
-            Diwali Cracker Playground
+            {SOCIETY_NAME}
           </h1>
           <p className="truncate font-hindi text-xs text-gold-400/90" lang="hi">
-            शुभ दीपावली · Happy Diwali
+            Diwali Cracker Playground · शुभ दीपावली
           </p>
         </div>
       </div>
@@ -54,10 +57,20 @@ export default function TopBar() {
           <ReplayIcon className="h-4 w-4" />
           <span className="hidden lg:inline">Replay</span>
         </IconButton>
-        <IconButton label="Clear scene" onClick={clearScene} disabled={busy || spent === 0}>
+        <IconButton label="Clear scene" onClick={clearScene}>
           <TrashIcon className="h-4 w-4" />
           <span className="hidden lg:inline">Clear</span>
         </IconButton>
+        <IconButton
+          label={ambientOn ? 'Turn ambient sound off' : 'Turn ambient sound on'}
+          onClick={() => {
+            audio.unlock()
+            toggleAmbient()
+          }}
+        >
+          {ambientOn ? <MusicIcon className="h-4 w-4" /> : <MusicOffIcon className="h-4 w-4" />}
+        </IconButton>
+        <Places />
         <IconButton
           label={soundOn ? 'Mute sound' : 'Turn sound on'}
           onClick={() => {
