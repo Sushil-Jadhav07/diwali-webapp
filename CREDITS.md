@@ -30,9 +30,13 @@ No Pixabay or Mixamo content is used, as the project rules require.
 |---|---|---|
 | Fredoka | https://fonts.google.com/specimen/Fredoka | SIL Open Font License 1.1 |
 | Nunito | https://fonts.google.com/specimen/Nunito | SIL Open Font License 1.1 |
-| Baloo 2 (Devanagari) | https://fonts.google.com/specimen/Baloo+2 | SIL Open Font License 1.1 |
+| Baloo 2 (Devanagari: Hindi and Marathi) | https://fonts.google.com/specimen/Baloo+2 | SIL Open Font License 1.1 |
 
 The fonts are loaded at runtime from Google Fonts, not redistributed. If they fail to load, the CSS falls back to system fonts (`Nirmala UI` / `Mangal` for Hindi).
+
+## Translations
+
+Hindi and Marathi UI text, cracker names, hints and signage in `src/i18n/` were written for this project (original work).
 
 ## npm packages
 

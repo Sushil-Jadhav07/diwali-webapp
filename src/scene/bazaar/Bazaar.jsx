@@ -17,15 +17,15 @@ import { fx, rand } from '../../crackers/fx'
 // ---------------------------------------------------------------------------
 
 export const STALL_INFO = {
-  patakha: { en: 'Patakha Shop', hi: 'पटाखा दुकान', a: '#b91c1c', b: '#facc15' },
-  mithai: { en: 'Mithai Bhandar', hi: 'मिठाई भंडार', a: '#be185d', b: '#fde7f3' },
-  diya: { en: 'Diya & Pottery', hi: 'दीये और मिट्टी', a: '#9a3412', b: '#fed7aa' },
-  rangolicolours: { en: 'Rangoli Colours', hi: 'रंगोली के रंग', a: '#6d28d9', b: '#fef08a' },
-  phool: { en: 'Phool & Garlands', hi: 'फूल और माला', a: '#ea580c', b: '#fef9c3' },
-  kandil: { en: 'Kandil & Lights', hi: 'कंदील और लाइट', a: '#1d4ed8', b: '#fde68a' },
-  gift: { en: 'Gifts & Dry Fruits', hi: 'उपहार और मेवे', a: '#047857', b: '#fef3c7' },
-  chaat: { en: 'Chaat Corner', hi: 'चाट कॉर्नर', a: '#c2410c', b: '#ecfccb' },
-  toys: { en: 'Balloons & Toys', hi: 'गुब्बारे और खिलौने', a: '#0e7490', b: '#fbcfe8' },
+  patakha: { en: 'Patakha Shop', hi: 'पटाखा दुकान', mr: 'फटाका दुकान', a: '#b91c1c', b: '#facc15' },
+  mithai: { en: 'Mithai Bhandar', hi: 'मिठाई भंडार', mr: 'मिठाई भांडार', a: '#be185d', b: '#fde7f3' },
+  diya: { en: 'Diya & Pottery', hi: 'दीये और मिट्टी', mr: 'पणत्या आणि मातीकाम', a: '#9a3412', b: '#fed7aa' },
+  rangolicolours: { en: 'Rangoli Colours', hi: 'रंगोली के रंग', mr: 'रांगोळीचे रंग', a: '#6d28d9', b: '#fef08a' },
+  phool: { en: 'Phool & Garlands', hi: 'फूल और माला', mr: 'फुले आणि हार', a: '#ea580c', b: '#fef9c3' },
+  kandil: { en: 'Kandil & Lights', hi: 'कंदील और लाइट', mr: 'आकाशकंदील आणि दिवे', a: '#1d4ed8', b: '#fde68a' },
+  gift: { en: 'Gifts & Dry Fruits', hi: 'उपहार और मेवे', mr: 'भेटवस्तू आणि सुकामेवा', a: '#047857', b: '#fef3c7' },
+  chaat: { en: 'Chaat Corner', hi: 'चाट कॉर्नर', mr: 'चाट कॉर्नर', a: '#c2410c', b: '#ecfccb' },
+  toys: { en: 'Balloons & Toys', hi: 'गुब्बारे और खिलौने', mr: 'फुगे आणि खेळणी', a: '#0e7490', b: '#fbcfe8' },
 }
 
 const rot = (s) => (s.facing === '-z' ? Math.PI : 0)
@@ -58,7 +58,9 @@ function stripeTexture(a, b) {
   return t
 }
 
-function signTexture(info) {
+function signTexture(info, lang = 'en') {
+  const top = lang === 'en' ? info.en : info[lang]
+  const bottom = lang === 'en' ? info.hi : info.en
   const c = document.createElement('canvas')
   c.width = 512
   c.height = 128
@@ -76,10 +78,12 @@ function signTexture(info) {
     g.textAlign = 'center'
     g.textBaseline = 'middle'
     g.font = '700 44px Fredoka, sans-serif'
-    g.fillText(info.en, 256, 44)
+    g.font = lang === 'en' ? '700 44px Fredoka, sans-serif' : '700 42px "Baloo 2", "Nirmala UI", sans-serif'
+    g.fillText(top, 256, 46)
     g.font = '600 36px "Baloo 2", "Nirmala UI", sans-serif'
     g.fillStyle = '#fde68a'
-    g.fillText(info.hi, 256, 94)
+    g.font = lang === 'en' ? '600 36px "Baloo 2", "Nirmala UI", sans-serif' : '600 32px Fredoka, sans-serif'
+    g.fillText(bottom, 256, 96)
     t.needsUpdate = true
   }
   paint()
@@ -301,13 +305,14 @@ function Structures() {
 }
 
 function Canopies() {
+  const lang = useStore((s) => s.lang)
   const items = useMemo(
     () =>
       STALLS.map((s) => {
         const info = STALL_INFO[s.id]
-        return { s, info, stripe: stripeTexture(info.a, info.b), sign: signTexture(info) }
+        return { s, info, stripe: stripeTexture(info.a, info.b), sign: signTexture(info, lang) }
       }),
-    [],
+    [lang],
   )
   return (
     <>
@@ -388,14 +393,14 @@ function PatakhaCounter() {
   const open = () => {
     const st = useStore.getState()
     st.openMenu()
-    st.showHint('Patakha Shop: pick any cracker from the menu, then Aarav will light it on an open spot.')
+    st.showHint('hint.shopOpen')
   }
   useFrame(() => {
     const d = Math.hypot(rig.pos.x - front[0], rig.pos.z - front[2])
     const near = d < 2.4
     if (near && !hinted.current) {
       hinted.current = true
-      useStore.getState().showHint('Press E (or tap the counter) to see the crackers.')
+      useStore.getState().showHint('hint.shopNear')
     }
     if (!near) hinted.current = false
     if (near && input.interactAt > last.current) {

@@ -12,7 +12,7 @@ export default function ClickToMove() {
     e.stopPropagation()
     const { phase, showHint } = useStore.getState()
     if (phase !== 'idle') return
-    if (!navTo(rig.pos.x, rig.pos.z, e.point.x, e.point.z, 'click')) showHint("Aarav can't get there from here.")
+    if (!navTo(rig.pos.x, rig.pos.z, e.point.x, e.point.z, 'click')) showHint('hint.cantReach')
   }
   return (
     <mesh rotation-x={-Math.PI / 2} position={[(WORLD.minX + WORLD.maxX) / 2, 0.02, (WORLD.minZ + WORLD.maxZ) / 2]} onClick={onClick}>

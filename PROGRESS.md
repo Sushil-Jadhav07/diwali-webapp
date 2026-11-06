@@ -18,7 +18,7 @@ Plan: docs/superpowers/plans/2026-11-06-master-pass.md (world plan with coordina
 
 ## QUEUED: FINAL PASS (user, 2026-11-06) — start only after every MASTER PASS stage above is checked
 Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
-- [ ] F1 full-screen + compact sidebar (64px icons, expands to ~260px), slim top bar, F fullscreen / H hide UI / Tab sidebar, quality tiers Low/Med/High/Ultra (auto + localStorage), language switcher EN/HI/MR (src/i18n)
+- [x] F1 full-screen + compact sidebar (64px rail, expands to 272px on hover/click/Tab, never shifts the canvas), slim top bar (society name, Replay, Clear, Places, language, Settings, Fullscreen, Hide UI, sound), F / H / Tab keys, quality tiers (from master stage 7), i18n EN/हिन्दी/मराठी in src/i18n (UI, cracker names + hints, phases, places, hints, 3D signage: banner, gate board, signboard, cabin, ground markings, bazaar boards), saved in localStorage. Verified: npm test 18 (no missing keys, Devanagari names), browser: widths 64/272, canvas unchanged, no scrollbars, Tab/H/F work, no raw keys in hi/mr/en, lighting from the rail works, no console errors. Note: Tab is repurposed for the menu (spec), so Tab focus-cycling is replaced.
 - [ ] F2 jump (Space / mobile button) with lit-cracker safety block
 - [ ] F3 realism pass (CC0 PBR textures, sky, AO, grain, wet ground, detail, characters) + time-of-day slider (sunset -> late night)
 - [ ] F4 big central aakash kandil, more kandils/sky lanterns, several rangoli designs
@@ -47,7 +47,7 @@ Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
 - [x] 6 More crackers: 16 total in the sidebar (phuljhadi, anar, anardeluxe, colorshower, chakri, chakrideluxe, snake, asynk, rocket, rocketbundle, skyshot, cake, bijli, sutli, ladi, poppop), categorised scrollable sidebar (Hand-held, Ground, Sky, Sound)
 
 ## In progress
-FINAL PASS F1 (full-screen layout + compact sidebar + language switcher; quality tiers already exist).
+FINAL PASS F2 (jump + lit-cracker safety).
 
 ## Next step
 Optional polish only (see LATER). If continuing, run the scratchpad-style UI verification again after any change (fire every [data-cracker] button, check the phase order via a store subscription, hammer buttons, check Replay/Clear/sound).

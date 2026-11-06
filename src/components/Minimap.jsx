@@ -19,7 +19,7 @@ import {
 import { rig } from '../scene/shared'
 import { dangerZones, LIVE_PEOPLE } from '../world/safety'
 import { navTo } from '../world/input'
-import { useStore } from '../store/useStore'
+import { useStore, useT } from '../store/useStore'
 
 // Top-down SVG minimap in world units (x right, z down). The player arrow,
 // danger zones and people are moved with requestAnimationFrame (no React
@@ -30,6 +30,7 @@ const MAX_DANGER = 6
 const MAX_PEOPLE = 48
 
 export default function Minimap({ className = '' }) {
+  const t = useT()
   const svg = useRef()
   const me = useRef()
   const danger = useRef([])
@@ -74,22 +75,22 @@ export default function Minimap({ className = '' }) {
     const w = pt.matrixTransform(el.getScreenCTM().inverse())
     const { phase, showHint } = useStore.getState()
     if (phase !== 'idle') {
-      showHint('Aarav is busy with a cracker. Try again when he is done.')
+      showHint('hint.busyNow')
       return
     }
-    if (!navTo(rig.pos.x, rig.pos.z, w.x, w.y, 'map')) showHint("Aarav can't get there from here.")
+    if (!navTo(rig.pos.x, rig.pos.z, w.x, w.y, 'map')) showHint('hint.cantReach')
   }
 
   return (
     <div className={`glass pointer-events-auto rounded-2xl p-2 ${className}`}>
-      <p className="mb-1 truncate px-1 font-display text-[11px] font-semibold tracking-wide text-gold-200 uppercase">{SOCIETY_NAME}</p>
+      <p className="mb-1 truncate px-1 font-display text-[11px] font-semibold tracking-wide text-gold-200 uppercase">{t('ui.society')}</p>
       <svg
         ref={svg}
         viewBox={VB}
         className="block h-auto w-full cursor-pointer rounded-lg bg-night-950/80"
         onClick={onClick}
         role="img"
-        aria-label={`Map of ${SOCIETY_NAME}. Click to walk there.`}
+        aria-label={t('ui.mapAria', { name: t('ui.society') })}
       >
         <rect {...R(WORLD)} fill="#1b1830" stroke="#f5b942" strokeOpacity="0.55" strokeWidth="0.6" />
         <rect {...R(MAIN_LANE)} fill="#2b2a33" />
@@ -115,7 +116,7 @@ export default function Minimap({ className = '' }) {
         <rect x={GATE.x - GATE.halfW} y={GATE.z - 0.6} width={GATE.halfW * 2} height="1.2" fill="#f5b942" />
         {PLACES.map((p) => (
           <circle key={p.id} cx={p.x} cy={p.z} r="0.7" fill="#fde9b0" fillOpacity="0.85">
-            <title>{p.name}</title>
+            <title>{t(`place.${p.id}`)}</title>
           </circle>
         ))}
         {Array.from({ length: MAX_PEOPLE }, (_, i) => (

@@ -5,6 +5,7 @@ import { findPlacement, findRetreat, addDanger, clearDanger, removeDanger, DANGE
 import { audio } from '../audio/audio'
 import { fx } from '../crackers/fx'
 import { savedTier, saveTier } from '../world/quality'
+import { savedLang, saveLang, translate } from '../i18n/index.js'
 
 // Strict child state machine order.
 export const PHASES = ['idle', 'walkingTo', 'placing', 'lighting', 'retreating', 'waiting', 'celebrating']
@@ -42,6 +43,9 @@ export const useStore = create((set, get) => ({
   blocked: 0, // count of ignored clicks while busy (for UI feedback)
   hint: null, // { id, text } friendly safety / navigation hints
   clearSeq: 0, // bumps on every Clear so systems can cancel pending work
+  lang: savedLang() || 'en',
+  uiHidden: false,
+  sidebarOpen: false,
   menuPulse: 0, // bumps when a shop asks the cracker menu to open / highlight
   sceneReady: false,
   quality: savedTier() || 'auto', // 'auto' | 'low' | 'medium' | 'high' | 'ultra'
@@ -51,7 +55,13 @@ export const useStore = create((set, get) => ({
   toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
   toggleAmbient: () => set((s) => ({ ambientOn: !s.ambientOn })),
   showHint: (text) => set({ hint: { id: hintId++, text } }),
-  openMenu: () => set((s) => ({ menuPulse: s.menuPulse + 1 })),
+  openMenu: () => set((s) => ({ menuPulse: s.menuPulse + 1, sidebarOpen: true })),
+  setLang: (lang) => {
+    saveLang(lang)
+    set({ lang })
+  },
+  toggleUi: () => set((s) => ({ uiHidden: !s.uiHidden })),
+  setSidebarOpen: (v) => set((s) => ({ sidebarOpen: typeof v === 'function' ? v(s.sidebarOpen) : v })),
   setSceneReady: () => set({ sceneReady: true }),
   setQuality: (q) => {
     saveTier(q === 'auto' ? null : q)
@@ -73,10 +83,10 @@ export const useStore = create((set, get) => ({
     const held = !!def.held
     const spot = findPlacement(rig.pos.x, rig.pos.z, rig.yaw, cat, LIVE_PEOPLE)
     if (!spot) {
-      s.showHint(HINTS.none)
+      s.showHint('hint.none')
       return false
     }
-    if (spot.moved) s.showHint(HINTS[spot.reason] || HINTS.blocked)
+    if (spot.moved) s.showHint(`hint.${HINTS[spot.reason] ? spot.reason : 'blocked'}`)
     const r = dangerRadius(type)
     const from = { x: rig.pos.x, z: rig.pos.z }
     // stand 0.55 m in front of the cracker, on the side the child came from
@@ -145,3 +155,10 @@ export const isBusy = (phase) => phase !== 'idle'
 
 // Dev-only handle for automated verification scripts.
 if (import.meta.env?.DEV && typeof window !== 'undefined') window.__store = useStore
+
+// Translate with the current language (re-renders when the language changes).
+export function useT() {
+  const lang = useStore((s) => s.lang)
+  return (key, vars) => translate(lang, key, vars)
+}
+export const tNow = (key, vars) => translate(useStore.getState().lang, key, vars)

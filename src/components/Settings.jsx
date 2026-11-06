@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useStore } from '../store/useStore'
+import { useStore, useT } from '../store/useStore'
 import { TIERS, TIER_IDS } from '../world/quality'
+import { LANGS } from '../i18n/index.js'
 
 function GearIcon({ className = 'h-4 w-4' }) {
   return (
@@ -21,6 +22,9 @@ export default function Settings() {
   const setTier = useStore((s) => s.setTier)
   const ambientOn = useStore((s) => s.ambientOn)
   const toggleAmbient = useStore((s) => s.toggleAmbient)
+  const lang = useStore((s) => s.lang)
+  const setLang = useStore((s) => s.setLang)
+  const t = useT()
   const choose = (q) => {
     setQuality(q)
     if (q !== 'auto') setTier(q)
@@ -45,7 +49,7 @@ export default function Settings() {
             exit={{ opacity: 0, y: -4, transition: { duration: 0.12 } }}
             className="glass absolute top-12 right-0 z-40 w-60 rounded-2xl p-3"
           >
-            <p className="mb-2 font-display text-sm font-semibold text-gold-200">Quality</p>
+            <p className="mb-2 font-display text-sm font-semibold text-gold-200">{t('ui.quality')}</p>
             <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Quality">
               {['auto', ...TIER_IDS].map((q) => (
                 <button
@@ -59,15 +63,23 @@ export default function Settings() {
                     quality === q ? 'border-gold-400 bg-gold-400/20 text-gold-200' : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10'
                   }`}
                 >
-                  {q === 'auto' ? 'Auto' : TIERS[q].label}
+                  {q === 'auto' ? t('ui.auto') : TIERS[q].label}
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[11px] text-white/55">In use: {TIERS[tier]?.label || tier}. Auto picks a tier for this device.</p>
+            <p className="mt-2 text-[11px] text-white/55">{t('ui.inUse', { tier: TIERS[tier]?.label || tier })}</p>
             <label className="mt-3 flex min-h-10 cursor-pointer items-center justify-between rounded-lg bg-white/[0.04] px-3 text-sm text-gold-200">
-              Ambient sound
-              <input type="checkbox" checked={ambientOn} onChange={toggleAmbient} className="h-4 w-4 accent-amber-400" aria-label="Ambient sound" />
+              {t('ui.ambient')}
+              <input type="checkbox" checked={ambientOn} onChange={toggleAmbient} className="h-4 w-4 accent-amber-400" aria-label={t('ui.ambient')} />
             </label>
+            <p className="mt-3 mb-1.5 font-display text-sm font-semibold text-gold-200">{t('ui.language')}</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {LANGS.map((l) => (
+                <button key={l} type="button" data-lang={l} onClick={() => setLang(l)} aria-pressed={lang === l} className={`min-h-10 cursor-pointer rounded-lg border font-hindi text-xs ${lang === l ? 'border-gold-400 bg-gold-400/20 text-gold-200' : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10'}`}>
+                  {l === 'en' ? 'English' : l === 'hi' ? 'हिन्दी' : 'मराठी'}
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

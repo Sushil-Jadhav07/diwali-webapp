@@ -4,6 +4,8 @@ import { makeRangoliTexture, makeTileTexture } from './textures'
 import { RANGOLI_MAIN, RANGOLI_SMALL } from './society/layout'
 import { WORLD, MAIN_LANE, CROSS_LANE, CRACKER_GROUND, BAZAAR, PLAY_AREA, PLAY_ITEMS } from '../world/layout'
 import { mulberry32 } from './shared'
+import { useStore } from '../store/useStore'
+import { translate } from '../i18n/index.js'
 
 function canvasTex(w, h, draw, repeat = [1, 1]) {
   const c = document.createElement('canvas')
@@ -40,7 +42,9 @@ function asphalt(dashes) {
 }
 
 // Cracker Ground: packed concrete with safety markings and numbered pads.
-function crackerGroundTex() {
+function crackerGroundTex(lang = 'en') {
+  const T = (k) => translate(lang, k)
+  const sec = lang === 'en' ? 'hi' : 'en'
   const W = 1024
   const H = Math.round((W * (CRACKER_GROUND.maxZ - CRACKER_GROUND.minZ)) / (CRACKER_GROUND.maxX - CRACKER_GROUND.minX))
   return canvasTex(W, H, (g, w, h) => {
@@ -76,10 +80,12 @@ function crackerGroundTex() {
     }
     g.fillStyle = 'rgba(253,233,176,0.8)'
     g.font = '700 44px Fredoka, sans-serif'
-    g.fillText('CRACKER GROUND  •  पटाखा मैदान', w / 2, 58)
+    g.font = '700 44px Fredoka, "Baloo 2", sans-serif'
+    g.fillText(`${T('sign.groundTitle')}  •  ${translate(sec, 'sign.groundTitle')}`, w / 2, 58)
     g.font = '600 30px Fredoka, sans-serif'
     g.fillStyle = 'rgba(253,233,176,0.65)'
-    g.fillText('Keep a safe distance  •  सुरक्षित दूरी रखें', w / 2, h - 52)
+    g.font = '600 30px Fredoka, "Baloo 2", sans-serif'
+    g.fillText(`${T('sign.groundSafe')}  •  ${translate(sec, 'sign.groundSafe')}`, w / 2, h - 52)
   })
 }
 
@@ -125,11 +131,12 @@ export default function Ground() {
         t.repeat.set((CROSS_LANE.maxX - CROSS_LANE.minX) / 4, 1)
         return t
       })(),
-      ground: crackerGroundTex(),
       grass: grassTex(),
     }),
     [],
   )
+  const lang = useStore((s) => s.lang)
+  const groundTex = useMemo(() => crackerGroundTex(lang), [lang])
   const rangoli = useMemo(() => makeRangoliTexture(3, { size: 2048, variant: 'main' }), [])
   const rangoli2 = useMemo(() => makeRangoliTexture(21, { size: 1024, variant: 'small' }), [])
   const inner = rect(WORLD)
@@ -164,7 +171,7 @@ export default function Ground() {
         </Plane>
       )}
       <Plane {...rect(CRACKER_GROUND)} y={0.008}>
-        <meshStandardMaterial map={tex.ground} roughness={0.92} emissive="#ffffff" emissiveMap={tex.ground} emissiveIntensity={0.05} />
+        <meshStandardMaterial map={groundTex} roughness={0.92} emissive="#ffffff" emissiveMap={groundTex} emissiveIntensity={0.05} />
       </Plane>
       {/* main rangoli in front of Block B */}
       <mesh rotation-x={-Math.PI / 2} position={[RANGOLI_MAIN.x, 0.014, RANGOLI_MAIN.z]} receiveShadow>

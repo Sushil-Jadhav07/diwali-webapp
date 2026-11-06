@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useStore, PHASES, PHASE_LABEL } from '../store/useStore'
+import { useStore, PHASES, useT } from '../store/useStore'
+import { crackerName, crackerAltName } from '../i18n/index.js'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 
 export default function StatusBanner() {
+  const t = useT()
+  const lang = useStore((s) => s.lang)
   const phase = useStore((s) => s.phase)
   const current = useStore((s) => s.current)
   const blocked = useStore((s) => s.blocked)
@@ -33,11 +36,11 @@ export default function StatusBanner() {
             aria-live="polite"
           >
             <p className="font-display text-sm font-semibold text-gold-200">
-              {c.name}{' '}
+              {crackerName(lang, c.id)}{' '}
               <span className="font-hindi text-gold-400/90" lang="hi">
-                ({c.hindi})
+                ({crackerAltName(lang, c.id)})
               </span>{' '}
-              · {PHASE_LABEL[phase]}
+              · {t(`phase.${phase}`)}
             </p>
             <div className="mt-1.5 flex justify-center gap-1.5" aria-hidden>
               {PHASES.slice(1).map((p, i) => (
@@ -49,7 +52,7 @@ export default function StatusBanner() {
                 />
               ))}
             </div>
-            {showBlocked && <p className="mt-1 text-[11px] text-white/65">One at a time. Wait for this one to finish.</p>}
+            {showBlocked && <p className="mt-1 text-[11px] text-white/65">{t('ui.oneAtATime')}</p>}
           </motion.div>
         )}
       </AnimatePresence>

@@ -6,6 +6,8 @@ import { gateArchPoints, WALL as SW, GATE as SG } from './society/layout'
 import Marigolds, { swag, hang } from './society/Marigolds'
 import Glows from './society/Glows'
 import { mulberry32 } from './shared'
+import { useStore } from '../store/useStore'
+import { translate } from '../i18n/index.js'
 import {
   WORLD,
   WALL_H,
@@ -106,7 +108,8 @@ const marigoldBorder = (g, w, h, y1, y2) => {
   }
 }
 
-function bannerDraw(g, w, h) {
+function bannerDraw(g, w, h, lang = 'en') {
+  const T = (k) => translate(lang, k)
   const grd = g.createLinearGradient(0, 0, 0, h)
   grd.addColorStop(0, '#7a0f1f')
   grd.addColorStop(1, '#4a0814')
@@ -120,13 +123,14 @@ function bannerDraw(g, w, h) {
   g.textBaseline = 'middle'
   g.fillStyle = '#fde9b0'
   g.font = '700 70px Fredoka, sans-serif'
-  g.fillText('Happy Diwali from', w / 2, h * 0.36)
+  g.fillText(lang === 'en' ? 'Happy Diwali from' : T('sign.banner1'), w / 2, h * 0.36)
   g.fillStyle = '#ffb347'
   g.font = '700 78px Fredoka, sans-serif'
-  g.fillText(SOCIETY_NAME, w / 2, h * 0.66)
+  g.font = lang === 'en' ? '700 78px Fredoka, sans-serif' : '700 70px "Baloo 2", "Nirmala UI", sans-serif'
+  g.fillText(lang === 'en' ? SOCIETY_NAME : T('ui.society'), w / 2, h * 0.68)
 }
 
-function nameBoardDraw(g, w, h) {
+function nameBoardDraw(g, w, h, lang = 'en') {
   g.fillStyle = '#fff7e8'
   g.fillRect(0, 0, w, h)
   g.strokeStyle = '#8a1c2b'
@@ -139,10 +143,11 @@ function nameBoardDraw(g, w, h) {
   g.fillText(SOCIETY_NAME.toUpperCase(), w / 2, h * 0.4)
   g.fillStyle = '#b45309'
   g.font = '600 54px "Baloo 2", "Nirmala UI", sans-serif'
-  g.fillText(SOCIETY_NAME_HI, w / 2, h * 0.76)
+  g.fillText(lang === 'en' ? SOCIETY_NAME_HI : translate(lang, 'ui.society'), w / 2, h * 0.76)
 }
 
-function signDraw(g, w, h) {
+function signDraw(g, w, h, lang = 'en') {
+  const T = (k) => translate(lang, k)
   g.fillStyle = '#14324f'
   g.fillRect(0, 0, w, h)
   g.strokeStyle = '#f5b942'
@@ -155,11 +160,12 @@ function signDraw(g, w, h) {
   g.fillText(SOCIETY_NAME, w / 2, h * 0.24)
   g.font = '600 44px "Baloo 2", "Nirmala UI", sans-serif'
   g.fillStyle = '#f5b942'
-  g.fillText('स्वागत है  •  Welcome  •  शुभ दीपावली', w / 2, h * 0.47)
+  g.fillText(lang === 'en' ? 'स्वागत है  •  Welcome  •  शुभ दीपावली' : T('sign.welcome'), w / 2, h * 0.47)
   g.font = '500 34px Fredoka, sans-serif'
   g.fillStyle = '#e0e7ff'
-  g.fillText('Blocks A–D  •  Cracker Ground  •  Mandir  •  Bazaar  •  Play Area', w / 2, h * 0.7)
-  g.fillText('Light crackers only with an adult nearby', w / 2, h * 0.86)
+  g.font = '500 32px Fredoka, "Baloo 2", sans-serif'
+  g.fillText(T('sign.places'), w / 2, h * 0.7)
+  g.fillText(T('ui.safety'), w / 2, h * 0.86)
 }
 
 function plaqueDraw(g, w, h) {
@@ -179,14 +185,15 @@ function plaqueDraw(g, w, h) {
   g.fillText('RESIDENCY', w / 2, h * 0.62)
 }
 
-function cabinDraw(g, w, h) {
+function cabinDraw(g, w, h, lang = 'en') {
   g.fillStyle = '#1e3a8a'
   g.fillRect(0, 0, w, h)
   g.fillStyle = '#ffffff'
   g.textAlign = 'center'
   g.textBaseline = 'middle'
   g.font = '700 64px Fredoka, sans-serif'
-  g.fillText('SECURITY  •  सुरक्षा', w / 2, h / 2)
+  g.font = '700 58px Fredoka, "Baloo 2", sans-serif'
+  g.fillText(lang === 'en' ? 'SECURITY  •  सुरक्षा' : `${translate(lang, 'sign.security')}  •  SECURITY`, w / 2, h / 2)
 }
 
 // ---------- apartment balconies on every upper floor ----------
@@ -327,7 +334,8 @@ function MainGate() {
     return { pillars, caps, bars, frames }
   }, [Z])
   const archGeo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(gateArchPoints(24)), 48, SG.archTube, 8), [])
-  const nameTex = useMemo(() => boardTexture(nameBoardDraw, 1024, 256), [])
+  const lang = useStore((s) => s.lang)
+  const nameTex = useMemo(() => boardTexture((g, w, h) => nameBoardDraw(g, w, h, lang), 1024, 256), [lang])
   const plaqueTex = useMemo(() => boardTexture(plaqueDraw, 512, 256), [])
   const flowers = useMemo(() => {
     const pts = []
@@ -386,8 +394,9 @@ function MainGate() {
 
 // ---------- welcome signboard + security cabin with a watchman ----------
 function SignAndCabin() {
-  const signTex = useMemo(() => boardTexture(signDraw, 1024, 512), [])
-  const cabinTex = useMemo(() => boardTexture(cabinDraw, 1024, 160), [])
+  const lang = useStore((s) => s.lang)
+  const signTex = useMemo(() => boardTexture((g, w, h) => signDraw(g, w, h, lang), 1024, 512), [lang])
+  const cabinTex = useMemo(() => boardTexture((g, w, h) => cabinDraw(g, w, h, lang), 1024, 160), [lang])
   const watchman = useRef()
   const c = SECURITY_CABIN
   useFrame(({ clock }) => {
@@ -448,7 +457,8 @@ function SignAndCabin() {
 
 // ---------- Diwali banner on Block B ----------
 function Banner() {
-  const tex = useMemo(() => boardTexture(bannerDraw, 1024, 256), [])
+  const lang = useStore((s) => s.lang)
+  const tex = useMemo(() => boardTexture((g, w, h) => bannerDraw(g, w, h, lang), 1024, 256), [lang])
   const B = BLOCKS.find((b) => b.id === 'B')
   return (
     <group position={[0, 3.15, B.maxZ + 0.22]}>

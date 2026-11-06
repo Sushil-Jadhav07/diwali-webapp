@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { input } from '../world/input'
+import { useT } from '../store/useStore'
 
 // On-screen virtual joystick + Run toggle for touch devices.
 export default function Joystick() {
   const [touch, setTouch] = useState(false)
   const [run, setRun] = useState(false)
+  const t = useT()
   const base = useRef()
   const knob = useRef()
   const pid = useRef(null)
@@ -52,7 +54,7 @@ export default function Joystick() {
       <div
         ref={base}
         className="relative grid h-[112px] w-[112px] touch-none place-items-center rounded-full border border-gold-400/30 bg-night-900/55 backdrop-blur-sm"
-        aria-label="Move joystick"
+        aria-label={t('ui.joystick')}
         role="application"
         onPointerDown={(e) => {
           pid.current = e.pointerId
@@ -76,7 +78,7 @@ export default function Joystick() {
           run ? 'border-gold-400 bg-gold-400/25 text-gold-200' : 'border-white/15 bg-night-900/60 text-white/70'
         }`}
       >
-        Run
+        {t('ui.run')}
       </button>
     </div>
   )

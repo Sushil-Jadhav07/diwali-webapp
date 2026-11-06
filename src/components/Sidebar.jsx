@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { FlameIcon, SpinnerIcon, ShieldIcon } from './Icons'
 import { CATEGORIES, CRACKERS } from '../crackers/catalog'
-import { useStore, isBusy, PHASE_LABEL } from '../store/useStore'
+import { useStore, isBusy, useT } from '../store/useStore'
+import { crackerName, crackerHint, crackerAltName } from '../i18n/index.js'
 import CrackerIcon from './CrackerIcon'
 import { audio } from '../audio/audio'
 
-const GROUPS = CATEGORIES.map((cat) => ({ ...cat, items: CRACKERS.filter((c) => c.category === cat.id) })).filter(
-  (g) => g.items.length > 0,
-)
+// Compact cracker menu.
+// Desktop: a slim 64px glass rail (category tabs + cracker icons) that expands
+// to ~272px on hover / click / Tab with names, second-language names and hints.
+// It floats over the canvas, so it never shifts the 3D view.
+// Mobile: a bottom sheet with category chips and a scrollable row.
+const GROUPS = CATEGORIES.map((cat) => ({ ...cat, items: CRACKERS.filter((c) => c.category === cat.id) })).filter((g) => g.items.length)
+const CAT_ICON = { sky: 'skyshot', ground: 'anar', handheld: 'phuljhadi', sound: 'laxmi', toy: 'capgun' }
 
 function useLight() {
   const request = useStore((s) => s.request)
@@ -18,168 +22,184 @@ function useLight() {
   }
 }
 
-function CardDesktop({ c, busy, active, onLight, i }) {
+function Row({ c, lang, expanded, busy, active, onLight, t }) {
+  const name = crackerName(lang, c.id)
   return (
-    <motion.li
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: Math.min(0.6, 0.035 * i), duration: 0.25, ease: 'easeOut' }}
-      className={`flex items-center gap-3 rounded-xl border p-2.5 transition-colors duration-200 ${
-        active
-          ? 'border-gold-400/70 bg-gold-400/10'
-          : 'border-white/5 bg-white/[0.03] hover:border-gold-400/30 hover:bg-white/[0.06]'
-      }`}
-    >
-      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-night-950/70 text-gold-300 ring-1 ring-gold-400/20">
-        <CrackerIcon id={c.id} className="h-9 w-9" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-display text-[16px] leading-tight font-semibold text-gold-200">{c.name}</p>
-        <p className="font-hindi text-[14px] leading-tight text-gold-400/90" lang="hi">
-          {c.hindi}
-        </p>
-        <p className="truncate text-xs text-white/55">{c.blurb}</p>
-      </div>
+    <li>
       <button
         type="button"
         disabled={busy}
         onClick={() => onLight(c.id)}
-        aria-label={`Light ${c.name}`}
+        aria-label={t('ui.light', { name })}
+        title={expanded ? undefined : name}
         data-cracker={c.id}
-        className="flex h-11 min-w-[80px] cursor-pointer items-center justify-center gap-1 rounded-lg bg-gradient-to-b from-gold-400 to-ember-600 px-3 font-display text-sm font-semibold text-night-950 shadow-[0_4px_18px_-4px_rgb(249_115_22/0.7)] transition-all duration-150 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed disabled:from-white/15 disabled:to-white/10 disabled:text-white/45 disabled:shadow-none"
-      >
-        {active ? <SpinnerIcon className="h-4 w-4" /> : <FlameIcon className="h-4 w-4" />}
-        {active ? 'Busy' : 'Light it'}
-      </button>
-    </motion.li>
-  )
-}
-
-function CardMobile({ c, busy, active, onLight }) {
-  return (
-    <li className="w-[74px] shrink-0">
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => onLight(c.id)}
-        aria-label={`Light ${c.name}`}
-        className={`flex h-[88px] w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 transition-all duration-150 focus-visible:outline-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed ${
-          active ? 'border-gold-400/80 bg-gold-400/15' : 'border-white/10 bg-white/[0.04] disabled:opacity-45'
+        className={`group flex w-full cursor-pointer items-center gap-2.5 rounded-xl border p-1.5 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-gold-300 disabled:cursor-not-allowed ${
+          active ? 'border-gold-400/70 bg-gold-400/15' : 'border-transparent hover:border-gold-400/30 hover:bg-white/[0.07] disabled:opacity-50'
         }`}
       >
-        {active ? (
-          <SpinnerIcon className="h-8 w-8 text-gold-300" />
-        ) : (
-          <CrackerIcon id={c.id} className="h-8 w-8 text-gold-300" />
-        )}
-        <span className="text-center font-display text-[11.5px] leading-tight font-semibold text-gold-200">{c.name}</span>
-        <span className="text-center font-hindi text-[11px] leading-[1.15] text-gold-400/90" lang="hi">
-          {c.hindi}
+        <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-night-950/70 text-gold-300 ring-1 ring-gold-400/20">
+          {active ? <SpinnerIcon className="h-6 w-6" /> : <CrackerIcon id={c.id} className="h-7 w-7" />}
         </span>
+        {expanded && (
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-display text-[14px] leading-tight font-semibold text-gold-200">{name}</span>
+            <span className="block truncate font-hindi text-[12px] leading-[1.25] text-gold-400/90">{crackerAltName(lang, c.id)}</span>
+            <span className="block truncate text-[11px] leading-tight text-white/55">{crackerHint(lang, c.id)}</span>
+          </span>
+        )}
+        {expanded && !busy && <FlameIcon className="h-4 w-4 shrink-0 text-ember-500 opacity-0 transition-opacity group-hover:opacity-100" />}
       </button>
     </li>
   )
 }
 
 export default function Sidebar() {
-  // a shop (or anything else) can ask the menu to light up for a moment
+  const t = useT()
+  const lang = useStore((s) => s.lang)
+  const phase = useStore((s) => s.phase)
+  const current = useStore((s) => s.current)
+  const open = useStore((s) => s.sidebarOpen)
+  const setOpen = useStore((s) => s.setSidebarOpen)
   const pulse = useStore((s) => s.menuPulse)
+  const busy = isBusy(phase)
+  const onLight = useLight()
+  const [hover, setHover] = useState(false)
   const [glow, setGlow] = useState(false)
+  const [mobileCat, setMobileCat] = useState(GROUPS[0].id)
+  const expanded = hover || open
+
   useEffect(() => {
     if (!pulse) return
     setGlow(true)
-    const t = setTimeout(() => setGlow(false), 1800)
-    return () => clearTimeout(t)
+    const tm = setTimeout(() => setGlow(false), 1800)
+    return () => clearTimeout(tm)
   }, [pulse])
-  const phase = useStore((s) => s.phase)
-  const current = useStore((s) => s.current)
-  const busy = isBusy(phase)
-  const onLight = useLight()
-  let n = 0
+
+  const jump = (id) => document.getElementById(`cat-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const mobileItems = GROUPS.find((g) => g.id === mobileCat)?.items || []
 
   return (
     <>
-      {/* Desktop / tablet: left sidebar, scrollable, grouped by category */}
-      <aside className={`glass pointer-events-auto absolute top-24 bottom-4 left-4 z-20 hidden w-[300px] flex-col rounded-2xl p-4 md:flex ${glow ? 'ring-2 ring-gold-300 shadow-[0_0_40px_rgb(251_191_36/0.55)]' : ''}`}>
-        <div className="mb-2 flex items-end justify-between">
-          <div>
-            <h2 className="font-display text-xl font-semibold text-gold-200">Crackers</h2>
-            <p className="text-xs text-white/60">
-              {CRACKERS.length} to try. Pick one and Aarav lights it.
-            </p>
-          </div>
-          <span
-            className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${
-              busy ? 'bg-ember-500/20 text-ember-500' : 'bg-emerald-400/15 text-emerald-300'
-            }`}
-            aria-live="polite"
-          >
-            {busy ? PHASE_LABEL[phase] : 'Ready'}
+      {/* ---------------- desktop rail ---------------- */}
+      <aside
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        aria-label={t('ui.crackers')}
+        className={`glass pointer-events-auto absolute top-20 bottom-3 left-3 z-20 hidden flex-col overflow-hidden rounded-2xl p-2 transition-[width,box-shadow] duration-200 ease-out md:flex ${
+          expanded ? 'w-[272px]' : 'w-[64px]'
+        } ${glow ? 'ring-2 ring-gold-300 shadow-[0_0_40px_rgb(251_191_36/0.55)]' : ''}`}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={expanded}
+          aria-label={t('ui.sidebar')}
+          title={t('ui.sidebar')}
+          className="mb-1.5 flex h-10 w-full shrink-0 cursor-pointer items-center gap-2 rounded-lg px-1.5 text-left hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-gold-300"
+        >
+          <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-bold ${busy ? 'bg-ember-500/25 text-ember-500' : 'bg-emerald-400/15 text-emerald-300'}`} aria-hidden>
+            {busy ? '●' : '✓'}
           </span>
-        </div>
-        <nav className="mb-2 flex gap-1 overflow-x-auto no-scrollbar" aria-label="Cracker categories">
-          {GROUPS.map((grp) => (
+          {expanded && (
+            <span className="min-w-0">
+              <span className="block font-display text-[15px] leading-tight font-semibold text-gold-200">{t('ui.crackers')}</span>
+              <span className="block truncate text-[11px] text-white/60" aria-live="polite">
+                {busy ? t(`phase.${phase}`) : t('ui.pickOne', { n: CRACKERS.length })}
+              </span>
+            </span>
+          )}
+        </button>
+
+        {/* category tabs: icons (labels when expanded) */}
+        <nav className={`mb-1.5 flex shrink-0 gap-1 ${expanded ? 'flex-wrap' : 'flex-col'}`} aria-label={t('ui.categories')}>
+          {GROUPS.map((g) => (
             <button
-              key={grp.id}
+              key={g.id}
               type="button"
-              onClick={() => document.getElementById(`cat-${grp.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="min-h-9 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-semibold text-gold-200 transition-colors hover:border-gold-400/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-gold-300"
+              onClick={() => jump(g.id)}
+              title={t(`cat.${g.id}`)}
+              aria-label={t(`cat.${g.id}`)}
+              className={`flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-gold-200 transition-colors hover:border-gold-400/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-gold-300 ${
+                expanded ? 'px-2 text-[11px] font-semibold' : 'w-full justify-center'
+              }`}
             >
-              {grp.label}
+              <CrackerIcon id={CAT_ICON[g.id]} className="h-5 w-5" />
+              {expanded && t(`cat.${g.id}`)}
             </button>
           ))}
         </nav>
-        <div className="no-scrollbar -mx-1 flex-1 overflow-y-auto overscroll-contain px-1 pb-1">
-          {GROUPS.map((grp) => (
-            <section key={grp.id} aria-labelledby={`cat-${grp.id}`} className="mb-3 last:mb-0">
+
+        <div className="no-scrollbar -mx-1 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-1">
+          {GROUPS.map((g) => (
+            <section key={g.id} aria-labelledby={`cat-${g.id}`} className="mb-2">
               <h3
-                id={`cat-${grp.id}`}
-                className="sticky top-0 z-10 -mx-1 mb-1.5 flex items-baseline gap-2 rounded-md bg-night-900/90 px-1.5 py-1 font-display text-[12px] font-semibold tracking-[0.12em] text-gold-300 uppercase backdrop-blur-sm"
+                id={`cat-${g.id}`}
+                className="sticky top-0 z-10 mb-1 truncate rounded-md bg-night-900/90 px-1 py-0.5 text-center font-display text-[10px] font-semibold tracking-[0.1em] text-gold-300/80 uppercase backdrop-blur-sm"
               >
-                {grp.label}
-                <span className="font-hindi text-[12px] tracking-normal text-gold-400/70 normal-case" lang="hi">
-                  {grp.hindi}
-                </span>
-                <span className="ml-auto text-[10px] tracking-normal text-white/40">{grp.items.length}</span>
+                {expanded ? `${t(`cat.${g.id}`)} · ${g.items.length}` : g.items.length}
               </h3>
-              <ul className="flex flex-col gap-2">
-                {grp.items.map((c) => (
-                  <CardDesktop key={c.id} c={c} i={n++} busy={busy} active={current?.type === c.id} onLight={onLight} />
+              <ul className="flex flex-col gap-1">
+                {g.items.map((c) => (
+                  <Row key={c.id} c={c} lang={lang} t={t} expanded={expanded} busy={busy} active={current?.type === c.id} onLight={onLight} />
                 ))}
               </ul>
             </section>
           ))}
         </div>
-        <p className="mt-3 flex items-center gap-2 rounded-lg bg-night-950/60 px-3 py-2 text-xs text-gold-200/90">
+        <p
+          className={`mt-1.5 flex shrink-0 items-center gap-2 rounded-lg bg-night-950/60 px-2 py-1.5 text-[11px] text-gold-200/90 ${expanded ? '' : 'justify-center'}`}
+          title={t('ui.safety')}
+        >
           <ShieldIcon className="h-4 w-4 shrink-0 text-gold-400" />
-          Light crackers only with an adult nearby.
+          {expanded && t('ui.safety')}
         </p>
       </aside>
 
-      {/* Mobile: bottom bar, horizontal scroll grouped by category */}
+      {/* ---------------- mobile bottom sheet ---------------- */}
       <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 md:hidden">
-        <div className="glass mx-2 mb-[max(8px,env(safe-area-inset-bottom))] rounded-2xl px-2 pt-2 pb-1.5">
-          <div className="no-scrollbar flex gap-2 overflow-x-auto overscroll-x-contain">
-            {GROUPS.map((grp) => (
-              <div key={grp.id} className="flex shrink-0 items-stretch gap-1.5" role="group" aria-label={grp.label}>
-                <span
-                  className="flex w-4 shrink-0 items-center justify-center text-[10px] font-bold tracking-wider text-gold-400/80 uppercase [writing-mode:vertical-rl]"
-                  style={{ transform: 'rotate(180deg)' }}
-                  aria-hidden
-                >
-                  {grp.label}
-                </span>
-                <ul className="flex gap-1.5">
-                  {grp.items.map((c) => (
-                    <CardMobile key={c.id} c={c} busy={busy} active={current?.type === c.id} onLight={onLight} />
-                  ))}
-                </ul>
-              </div>
+        <div className={`glass mx-2 mb-[max(8px,env(safe-area-inset-bottom))] rounded-2xl px-2 pt-2 pb-1.5 ${glow ? 'ring-2 ring-gold-300' : ''}`}>
+          <div className="no-scrollbar mb-1.5 flex gap-1.5 overflow-x-auto" role="tablist" aria-label={t('ui.categories')}>
+            {GROUPS.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                role="tab"
+                aria-selected={mobileCat === g.id}
+                onClick={() => setMobileCat(g.id)}
+                className={`flex h-9 shrink-0 cursor-pointer items-center gap-1 rounded-lg border px-2 text-[11px] font-semibold ${
+                  mobileCat === g.id ? 'border-gold-400 bg-gold-400/20 text-gold-200' : 'border-white/10 bg-white/[0.04] text-white/70'
+                }`}
+              >
+                <CrackerIcon id={CAT_ICON[g.id]} className="h-4 w-4" />
+                {t(`cat.${g.id}`)}
+              </button>
             ))}
           </div>
+          <ul className="no-scrollbar flex gap-1.5 overflow-x-auto">
+            {mobileItems.map((c) => {
+              const name = crackerName(lang, c.id)
+              const active = current?.type === c.id
+              return (
+                <li key={c.id} className="w-[78px] shrink-0">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onLight(c.id)}
+                    aria-label={t('ui.light', { name })}
+                    className={`flex h-[84px] w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 transition-all duration-150 active:scale-95 disabled:cursor-not-allowed ${
+                      active ? 'border-gold-400/80 bg-gold-400/15' : 'border-white/10 bg-white/[0.04] disabled:opacity-45'
+                    }`}
+                  >
+                    {active ? <SpinnerIcon className="h-7 w-7 text-gold-300" /> : <CrackerIcon id={c.id} className="h-7 w-7 text-gold-300" />}
+                    <span className="line-clamp-2 text-center font-display text-[11px] leading-tight font-semibold text-gold-200">{name}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
           <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-gold-200/80">
             <ShieldIcon className="h-3.5 w-3.5 text-gold-400" />
-            Light crackers only with an adult nearby.
+            {t('ui.safety')}
           </p>
         </div>
       </div>

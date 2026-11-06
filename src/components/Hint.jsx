@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useStore } from '../store/useStore'
+import { useStore, useT } from '../store/useStore'
 import { ShieldIcon } from './Icons'
 
 // Friendly safety / navigation hint toast (auto-dismisses after ~3.5 s).
 export default function Hint() {
   const hint = useStore((s) => s.hint)
+  const t = useT()
   const [shown, setShown] = useState(null)
   useEffect(() => {
     if (!hint) return
@@ -26,7 +27,7 @@ export default function Hint() {
             role="status"
           >
             <ShieldIcon className="h-4 w-4 shrink-0 text-gold-400" />
-            {shown.text}
+            {/^[a-z]+\./.test(shown.text) ? t(shown.text) : shown.text}
           </motion.div>
         )}
       </AnimatePresence>
