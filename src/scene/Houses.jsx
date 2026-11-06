@@ -8,6 +8,9 @@ import { SEGMENTS } from '../world/layout'
 // (world/layout.js). Each segment: { x, z, rot, w, d, floors, color, tone }.
 export const HOUSES = SEGMENTS
 
+// shared lit-window material (time of day brightens it as the evening darkens)
+export const LIT_WIN_MAT = new THREE.MeshStandardMaterial({ color: '#2a1608', emissive: '#ff9440', emissiveIntensity: 1.15, toneMapped: false })
+
 const FLOOR_H = 3
 
 // world-space point at house-local coordinates (lx along facade, ly up, lz out of facade)
@@ -70,7 +73,7 @@ export default function Houses() {
         <HouseBody key={i} h={h} plaster={plaster} />
       ))}
       <Instances mats={layout.litWin} geometry="plane">
-        <meshStandardMaterial color="#2a1608" emissive="#ff9440" emissiveIntensity={1.15} toneMapped={false} />
+        <primitive object={LIT_WIN_MAT} attach="material" />
       </Instances>
       <Instances mats={layout.darkWin} geometry="plane">
         <meshStandardMaterial color="#141a33" roughness={0.3} metalness={0.4} />

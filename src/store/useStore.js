@@ -45,13 +45,21 @@ export const useStore = create((set, get) => ({
   clearSeq: 0, // bumps on every Clear so systems can cancel pending work
   lang: savedLang() || 'en',
   uiHidden: false,
+  tod: 0, // time of day 0 = 6 pm sunset .. 1 = late night
+  todPlaying: false,
+  todTarget: 0.66,
   sidebarOpen: false,
   menuPulse: 0, // bumps when a shop asks the cracker menu to open / highlight
   sceneReady: false,
   quality: savedTier() || 'auto', // 'auto' | 'low' | 'medium' | 'high' | 'ultra'
   tier: 'medium', // resolved tier in use
 
-  start: () => set({ started: true }),
+  // starting the celebration plays the evening from sunset towards night
+  start: () => set({ started: true, todPlaying: true, todTarget: 0.66 }),
+  setTod: (tod) => set({ tod, todPlaying: false }),
+  syncTod: (tod) => set({ tod }),
+  playCycle: () => set((s) => ({ todPlaying: true, todTarget: 1, tod: s.tod >= 0.99 ? 0 : s.tod })),
+  stopCycle: () => set({ todPlaying: false }),
   toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
   toggleAmbient: () => set((s) => ({ ambientOn: !s.ambientOn })),
   showHint: (text) => set({ hint: { id: hintId++, text } }),

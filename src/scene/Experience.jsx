@@ -29,6 +29,7 @@ import LakshmiCorner from './LakshmiCorner'
 import NpcEvents from '../life/NpcEvents'
 import AmbientAudio from '../audio/AmbientAudio'
 import SceneReady from './SceneReady'
+import TimeOfDay from './TimeOfDay'
 import DangerRings from './DangerRings'
 import LightPools from './LightPools'
 import { START } from '../world/layout'
@@ -82,6 +83,7 @@ export default function Experience() {
         <NpcEvents />
         <AmbientAudio />
         <SceneReady />
+        <TimeOfDay />
         <DangerRings />
         <LightPools />
         <Society />

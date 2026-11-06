@@ -23,6 +23,8 @@ const flameGeo = (() => {
   return g
 })()
 
+export const FLAME_MAT = new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 3.0, 0.8), toneMapped: false })
+
 export const DIYA_POSITIONS = (() => {
   const list = []
   // ring around the main rangoli (skip the part tucked against the house plinth)
@@ -90,7 +92,7 @@ export default function Diyas() {
         <meshStandardMaterial color="#9a4a22" roughness={0.85} emissive="#5a1e05" emissiveIntensity={0.35} />
       </instancedMesh>
       <instancedMesh ref={flames} args={[flameGeo, null, n]} frustumCulled={false}>
-        <meshBasicMaterial color={[6, 3.0, 0.8]} toneMapped={false} />
+        <primitive object={FLAME_MAT} attach="material" />
       </instancedMesh>
     </group>
   )

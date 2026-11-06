@@ -9,6 +9,7 @@ attribute vec3 aColor;
 attribute float aPhase;
 uniform float uScale;
 uniform float uTime;
+uniform float uGain;
 varying vec3 vColor;
 void main() {
   float f = aPhase < 0.0 ? 1.0 : 0.88 + 0.12 * sin(uTime * 9.0 + aPhase) * sin(uTime * 5.3 + aPhase * 1.7);
@@ -20,19 +21,23 @@ void main() {
 
 const frag = /* glsl */ `
 varying vec3 vColor;
+uniform float uGain;
 void main() {
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c) * 2.0;
   float a = exp(-d * d * 3.2) * (1.0 - smoothstep(0.85, 1.0, d));
   if (a < 0.004) discard;
-  gl_FragColor = vec4(vColor * a, 1.0);
+  gl_FragColor = vec4(vColor * a * uGain, 1.0);
 }`
+
+// one shared gain for every glow sprite (time of day)
+export const GLOW_GAIN = { value: 1 }
 
 export function makeGlowMaterial() {
   return new THREE.ShaderMaterial({
     vertexShader: vert,
     fragmentShader: frag,
-    uniforms: { uScale: { value: 400 }, uTime: { value: 0 } },
+    uniforms: { uScale: { value: 400 }, uTime: { value: 0 }, uGain: GLOW_GAIN },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,

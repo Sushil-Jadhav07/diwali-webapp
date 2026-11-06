@@ -4,6 +4,7 @@ import { audio } from '../audio/audio'
 import BrandLogo from './BrandLogo'
 import Places from './Places'
 import Settings from './Settings'
+import TimeControl from './TimeControl'
 import { LANGS } from '../i18n/index.js'
 
 const btn =
@@ -82,6 +83,7 @@ export default function TopBar() {
           <TrashIcon className="h-4 w-4" />
         </IconButton>
         <Places />
+        <TimeControl />
         <label className={`${btn} hidden sm:flex`} title={t('ui.language')}>
           <span className="sr-only">{t('ui.language')}</span>
           <select

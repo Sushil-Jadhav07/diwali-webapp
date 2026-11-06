@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { HOUSES, housePoint } from './Houses'
 import { mulberry32 } from './shared'
+import { ENV } from '../world/env'
 import { FESTOON_POLES, FESTOON_H, LAMP_POSTS, LAMP_H, BAZAAR } from '../world/layout'
 
 const WARM = [1.0, 0.72, 0.32]
@@ -98,7 +99,7 @@ export default function StringLights() {
       if (b.mode === 'warm') k = 0.85 + 0.15 * Math.sin(t * 1.5 + b.phase)
       else if (b.mode === 'twinkle') k = 0.45 + 0.55 * Math.max(0, Math.sin(t * 2.2 + b.phase)) ** 3
       else k = ((b.idx + Math.floor(t * 4)) % 3 === 0 ? 1.0 : 0.3)
-      const s = 2.4 * k
+      const s = 2.4 * k * ENV.strings
       arr[i * 3] = b.col[0] * s
       arr[i * 3 + 1] = b.col[1] * s
       arr[i * 3 + 2] = b.col[2] * s

@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { fx } from '../crackers/fx'
 import { rig } from './shared'
+import { ENV } from '../world/env'
 import { useStore } from '../store/useStore'
 import { TIERS } from '../world/quality'
 
@@ -24,7 +25,11 @@ export default function SceneLights() {
       const snap = 36 / 1024
       const px = Math.round(rig.pos.x / snap) * snap
       const pz = Math.round(rig.pos.z / snap) * snap
-      m.position.set(px - 14, 24, pz - 18)
+      // low warm sun at 6 pm -> high cool moon at night (north-west)
+      const el = 0.14 + 0.75 * ENV.night
+      m.position.set(px - 0.5 * 40 * Math.cos(el), 40 * Math.sin(el) + 2, pz - 0.85 * 40 * Math.cos(el))
+      m.color.setRGB(...ENV.dirColor)
+      m.intensity = ENV.dirInt
       m.target.position.set(px, 0, pz)
       m.target.updateMatrixWorld()
     }
@@ -32,9 +37,12 @@ export default function SceneLights() {
     // firework flash lights the whole scene from above
     const f = fx.flash
     // the night air (fog) picks up a hint of the burst colour too
-    if (scene.fog) scene.fog.color.copy(FOG).lerp(fx.flashColor, Math.min(0.5, f * 0.18))
-    hemi.current.intensity = 1.85 + f * 0.9
-    hemi.current.color.copy(SKY).lerp(fx.flashColor, Math.min(1, f * 0.6))
+    if (scene.fog) {
+      scene.fog.color.setRGB(...ENV.fog).lerp(fx.flashColor, Math.min(0.5, f * 0.18))
+      scene.fog.density = ENV.fogDensity
+    }
+    hemi.current.intensity = ENV.hemi + f * 0.9
+    hemi.current.color.setRGB(...ENV.hemiSky).lerp(fx.flashColor, Math.min(1, f * 0.6))
   })
   return (
     <>

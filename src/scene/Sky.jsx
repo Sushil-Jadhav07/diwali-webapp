@@ -4,6 +4,7 @@ import { Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import { glowTexture } from './textures'
 import { fx } from '../crackers/fx'
+import { ENV } from '../world/env'
 
 const vert = /* glsl */ `
 varying vec3 vDir;
@@ -16,14 +17,22 @@ void main() {
 const frag = /* glsl */ `
 uniform vec3 uGlowColor;
 uniform float uGlow;
+uniform vec3 uTop;
+uniform vec3 uMid;
+uniform vec3 uHor;
+uniform vec3 uSunDir;
+uniform float uSunAmt;
 varying vec3 vDir;
 void main() {
   float h = vDir.y;
-  vec3 horizon = vec3(0.30, 0.13, 0.20);
-  vec3 mid = vec3(0.06, 0.05, 0.19);
-  vec3 top = vec3(0.012, 0.012, 0.05);
+  vec3 horizon = uHor;
+  vec3 mid = uMid;
+  vec3 top = uTop;
   vec3 col = mix(horizon, mid, smoothstep(-0.02, 0.22, h));
   col = mix(col, top, smoothstep(0.22, 0.85, h));
+  // setting sun: disc + warm glow near the horizon
+  float sd = max(0.0, dot(normalize(vDir), uSunDir));
+  col += vec3(1.0, 0.6, 0.3) * uSunAmt * (pow(sd, 900.0) * 8.0 + pow(sd, 24.0) * 0.5 + pow(sd, 4.0) * 0.18 * (1.0 - smoothstep(-0.05, 0.4, h)));
   // firework sky glow
   col += uGlowColor * uGlow * (0.25 + 0.75 * smoothstep(-0.05, 0.5, h));
   gl_FragColor = vec4(col, 1.0);
@@ -31,10 +40,28 @@ void main() {
 
 export default function Sky() {
   const mat = useRef()
-  const uniforms = useMemo(() => ({ uGlowColor: { value: new THREE.Color() }, uGlow: { value: 0 } }), [])
+  const uniforms = useMemo(
+    () => ({
+      uGlowColor: { value: new THREE.Color() },
+      uGlow: { value: 0 },
+      uTop: { value: new THREE.Vector3() },
+      uMid: { value: new THREE.Vector3() },
+      uHor: { value: new THREE.Vector3() },
+      uSunDir: { value: new THREE.Vector3(-0.5, 0.1, -0.85).normalize() },
+      uSunAmt: { value: 1 },
+    }),
+    [],
+  )
+  const stars = useRef()
   useFrame(() => {
     uniforms.uGlow.value = fx.skyGlow
     uniforms.uGlowColor.value.copy(fx.skyGlowColor)
+    uniforms.uTop.value.set(...ENV.skyTop)
+    uniforms.uMid.value.set(...ENV.skyMid)
+    uniforms.uHor.value.set(...ENV.skyHor)
+    uniforms.uSunAmt.value = ENV.sunAmt
+    uniforms.uSunDir.value.set(-0.5, Math.sin(ENV.sunElev), -0.85).normalize()
+    if (stars.current) stars.current.visible = ENV.stars > 0.15
   })
   return (
     <group>
@@ -50,7 +77,9 @@ export default function Sky() {
           fog={false}
         />
       </mesh>
-      <Stars radius={180} depth={60} count={2600} factor={5} saturation={0.15} fade speed={0.4} />
+      <group ref={stars}>
+        <Stars radius={180} depth={60} count={2600} factor={5} saturation={0.15} fade speed={0.4} />
+      </group>
       <Moon />
     </group>
   )

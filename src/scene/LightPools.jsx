@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { glowTexture } from './textures'
 import { LAMP_POSTS, STALLS, GATE, MANDIR, LAKSHMI, FESTOON_POLES, SECURITY_CABIN } from '../world/layout'
 import { HOUSES, housePoint } from './Houses'
+import { ENV } from '../world/env'
 
 // Fake light: warm additive pools on the ground under lamps, stalls, doors,
 // the gate, the mandir and the Lakshmi corner. One instanced draw call, no
@@ -55,7 +56,7 @@ export default function LightPools() {
   }, [pools])
   // a slow, gentle flicker like real lamps and diyas
   useFrame(({ clock }) => {
-    mat.opacity = 0.66 + Math.sin(clock.elapsedTime * 1.7) * 0.03
+    mat.opacity = (0.66 + Math.sin(clock.elapsedTime * 1.7) * 0.03) * ENV.pools
   })
   return <instancedMesh ref={ref} args={[geo, mat, pools.length]} renderOrder={1} />
 }
