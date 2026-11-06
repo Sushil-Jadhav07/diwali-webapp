@@ -4,9 +4,9 @@ import * as THREE from 'three'
 import { fx } from '../crackers/fx'
 import { rig } from './shared'
 
-const SKY = new THREE.Color('#3a3a8a')
+const SKY = new THREE.Color('#5254a8')
 const FOG = new THREE.Color('#14102e')
-const GROUND = new THREE.Color('#5a3418') // warm bounce from string lights
+const GROUND = new THREE.Color('#7a4a24') // warm bounce from string lights
 
 export default function SceneLights() {
   const hemi = useRef()
@@ -29,17 +29,17 @@ export default function SceneLights() {
     const f = fx.flash
     // the night air (fog) picks up a hint of the burst colour too
     if (scene.fog) scene.fog.color.copy(FOG).lerp(fx.flashColor, Math.min(0.5, f * 0.18))
-    hemi.current.intensity = 0.8 + f * 0.9
+    hemi.current.intensity = 1.85 + f * 0.9
     hemi.current.color.copy(SKY).lerp(fx.flashColor, Math.min(1, f * 0.6))
   })
   return (
     <>
-      <hemisphereLight ref={hemi} args={[SKY, GROUND, 0.8]} />
+      <hemisphereLight ref={hemi} args={[SKY, GROUND, 1.85]} />
       <directionalLight
         ref={moon}
         position={[-14, 24, -18]}
         color="#9fb0ff"
-        intensity={0.55}
+        intensity={1.15}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-18}
@@ -52,9 +52,9 @@ export default function SceneLights() {
         shadow-normalBias={0.03}
       />
       {/* warm glow from the festoons + diyas over the Cracker Ground */}
-      <pointLight position={[0, 4.4, -6]} color="#ffa95a" intensity={20} distance={24} decay={1.3} />
+      <pointLight position={[0, 4.6, -6]} color="#ffa95a" intensity={30} distance={32} decay={1.25} />
       {/* warm fill that follows the child wherever he walks */}
-      <pointLight ref={fill} position={[1.5, 2.6, 9]} color="#ffc27a" intensity={6} distance={10} decay={1.5} />
+      <pointLight ref={fill} position={[1.5, 2.6, 9]} color="#ffc27a" intensity={11} distance={16} decay={1.4} />
     </>
   )
 }

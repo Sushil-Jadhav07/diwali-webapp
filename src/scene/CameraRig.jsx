@@ -30,7 +30,10 @@ export default function CameraRig() {
     tmp: new THREE.Vector3(),
     seq: 0,
     seqStart: 0,
-    lift: 0,
+    showing: false,
+    returning: 0,
+    saved: new THREE.Vector3(),
+    cam: new THREE.Vector3(),
   })
 
   // priority -2: undo last frame's offset, then follow (before OrbitControls.update at -1)
@@ -57,21 +60,50 @@ export default function CameraRig() {
       s.seqStart = performance.now()
     }
     const userMoved = input.cameraTouchedAt > s.seqStart
-    // gentle look-up for aerial crackers while watching, if the user has not moved the camera
-    const wantLift = rig.focusMode === 'sky' && phase === 'waiting' && !userMoved ? 4.5 : 0
-    s.lift += (wantLift - s.lift) * (1 - Math.exp(-1.2 * dt))
-
     const d = s.desired
+    const k = 1 - Math.exp(-3.2 * dt)
+
+    // ---- sky show: for rockets / sky shots, drop low behind the child and
+    // look up at the bursts (as long as the user does not grab the camera) ----
+    if (rig.focusMode === 'sky' && phase === 'waiting' && !userMoved) {
+      if (!s.showing) {
+        s.showing = true
+        s.saved.subVectors(camera.position, c.target)
+        c.maxPolarAngle = Math.PI - 0.35 // allow looking up from below
+      }
+      let ux = rig.pos.x - rig.focusPoint.x
+      let uz = rig.pos.z - rig.focusPoint.z
+      const L = Math.hypot(ux, uz) || 1
+      ux /= L
+      uz /= L
+      d.set(rig.focusPoint.x - ux * 1.5, 13, rig.focusPoint.z - uz * 1.5)
+      s.cam.set(rig.pos.x + ux * 6.5, 1.5, rig.pos.z + uz * 6.5)
+      c.target.lerp(d, k)
+      camera.position.lerp(s.cam, 1 - Math.exp(-1.8 * dt))
+      s.prev.copy(c.target)
+      return
+    }
+    if (s.showing) {
+      s.showing = false
+      s.returning = userMoved ? 0 : 1.8
+      if (userMoved) c.maxPolarAngle = MAX_POLAR
+    }
+
     if (rig.focusMode === 'cracker') d.set((rig.pos.x + rig.focusPoint.x) / 2, 0.9, (rig.pos.z + rig.focusPoint.z) / 2)
     else d.set(rig.pos.x, 1.0, rig.pos.z)
-    d.y += s.lift
-    const k = 1 - Math.exp(-3.2 * dt)
     c.target.lerp(d, k)
+    if (s.returning > 0) {
+      // glide back to the view the user had before the show
+      s.returning -= dt
+      s.cam.copy(c.target).add(s.saved)
+      camera.position.lerp(s.cam, k * 1.4)
+      if (s.returning <= 0) c.maxPolarAngle = MAX_POLAR
+    }
     const delta = s.tmp.subVectors(c.target, s.prev)
     camera.position.x += delta.x
     camera.position.z += delta.z
     // the aerial lift tilts the view (camera height mostly stays)
-    camera.position.y += delta.y * (rig.focusMode === 'sky' ? 0.15 : 1)
+    camera.position.y += delta.y
     s.prev.copy(c.target)
   }, -2)
 

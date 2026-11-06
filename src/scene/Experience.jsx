@@ -22,6 +22,7 @@ import { useState } from 'react'
 import Backdrop from './Backdrop'
 import ClickToMove from './ClickToMove'
 import DangerRings from './DangerRings'
+import LightPools from './LightPools'
 import { START } from '../world/layout'
 
 export default function Experience() {
@@ -59,6 +60,7 @@ export default function Experience() {
         <Backdrop />
         <ClickToMove />
         <DangerRings />
+        <LightPools />
         <Society />
         <Mandir />
         <Residents />

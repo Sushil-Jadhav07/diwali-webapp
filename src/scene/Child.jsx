@@ -19,8 +19,8 @@ import { M, THIGH, SHIN, FOOT_H, Torso, Hem, Leg, Arm, Head } from './childBody'
 // Local +Z is the facing direction.
 // ---------------------------------------------------------------------------
 
-const WALK_SPEED = 1.35
-const RUN_SPEED = 3.3
+const WALK_SPEED = 2.1
+const RUN_SPEED = 5.2
 
 // ---------- pose helpers ----------
 const JOINTS = ['thighL', 'thighR', 'kneeL', 'kneeR', 'spine', 'head', 'headY', 'sway', 'shLx', 'shLz', 'shRx', 'shRz', 'elLx', 'elRx', 'elLz', 'elRz', 'bounce', 'twist']
@@ -257,7 +257,7 @@ export default function Child() {
     // walls, buildings, props; other crackers' danger zones are a soft barrier
     resolveCircle(rig.pos)
     pushOutOfDanger(rig.pos, AGENT_R, current ? current.id : null)
-    local.running = speed > 2.2
+    local.running = speed > 3.2
 
     // camera focus
     rig.focusPoint.set(spotX, 0, spotZ)
