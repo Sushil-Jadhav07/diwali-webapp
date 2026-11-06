@@ -10,6 +10,9 @@ import Houses from './Houses'
 import StringLights from './StringLights'
 import Diyas from './Diyas'
 import Trees from './Trees'
+import Residents from './Residents'
+import Mandir from './Mandir'
+import Society from './Society'
 import SceneLights from './SceneLights'
 import CameraRig from './CameraRig'
 import Child from './Child'
@@ -49,6 +52,9 @@ export default function Experience() {
         <StringLights />
         <Diyas />
         <Trees />
+        <Society />
+        <Mandir />
+        <Residents />
         <Child />
         <CrackerStage />
         <FxLayer />
