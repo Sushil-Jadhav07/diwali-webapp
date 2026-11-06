@@ -7,7 +7,7 @@ function Tree({ position, seed = 1, scale = 1 }) {
     return Array.from({ length: 6 }, () => ({
       p: [(r() - 0.5) * 2.2, 3.6 + r() * 1.6, (r() - 0.5) * 2.2],
       s: 0.9 + r() * 0.7,
-      c: ['#173a22', '#1d4529', '#13321d'][Math.floor(r() * 3)],
+      c: ['#2b5a34', '#336b3c', '#244d2c'][Math.floor(r() * 3)],
     }))
   }, [seed])
   return (

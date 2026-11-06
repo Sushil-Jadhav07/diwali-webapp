@@ -23,7 +23,7 @@ export default function Experience() {
     <Canvas
       shadows="percentage"
       dpr={dpr}
-      camera={{ position: [0, 3.4, 11.8], fov: 50, near: 0.1, far: 600 }}
+      camera={{ position: [0, 2.7, 9.6], fov: 50, near: 0.1, far: 600 }}
       gl={{ antialias: false, powerPreference: 'high-performance', toneMapping: THREE.NoToneMapping }}
       onCreated={({ scene }) => {
         scene.background = new THREE.Color('#0b0a24')

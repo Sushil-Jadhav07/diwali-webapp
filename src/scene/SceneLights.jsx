@@ -37,6 +37,8 @@ export default function SceneLights() {
       />
       {/* soft warm glow from the string lights over the courtyard */}
       <pointLight position={[0, 5.2, -1]} color="#ffb260" intensity={14} distance={22} decay={1.4} />
+      {/* warm porch lamp near the child's home spot */}
+      <pointLight position={[1.5, 2.6, 7.2]} color="#ffc27a" intensity={6} distance={10} decay={1.5} />
       <DiyaLights />
     </>
   )
