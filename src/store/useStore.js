@@ -92,3 +92,6 @@ export const useStore = create((set, get) => ({
 }))
 
 export const isBusy = (phase) => phase !== 'idle'
+
+// Dev-only handle for automated verification scripts.
+if (import.meta.env.DEV && typeof window !== 'undefined') window.__store = useStore

@@ -224,7 +224,8 @@ export default function Child() {
         break
       }
       case 'placing': {
-        if (def?.held) face(spotX - ux, spotZ - uz)
+        // the sparkler is held facing home (towards the camera) so its glow lights the face
+        if (def?.held) face(rig.pos.x + ux, rig.pos.z + uz)
         else face(spotX, spotZ)
         if (t > 0.6 && !rt.placed) {
           rt.placed = true
@@ -253,14 +254,14 @@ export default function Child() {
             rig.pos.x += (dx / d) * step
             rig.pos.z += (dz / d) * step
             moving = true
-            speed = -0.7
+            speed = 0.7
           } else st.advance('retreating')
-          face(spotX - ux * 3, spotZ - uz * 3)
+          face(rig.pos.x + ux * 3, rig.pos.z + uz * 3)
         } else if (goTo(HOME.x, HOME.z, RUN_SPEED)) st.advance('retreating')
         break
       }
       case 'waiting': {
-        if (def?.held) face(rig.pos.x - ux, rig.pos.z - uz)
+        if (def?.held) face(rig.pos.x + ux, rig.pos.z + uz)
         else face(spotX, spotZ)
         if (rt.done || t > 30) st.advance('waiting')
         break
@@ -473,6 +474,9 @@ function Leg({ side, set }) {
     <group ref={set('thigh' + s)} position={[0.075 * side, 0, 0]}>
       <mesh geometry={thighGeo} material={M.pyjama} castShadow />
       <group ref={set('knee' + s)} position={[0, -THIGH, 0]}>
+        <mesh material={M.pyjama}>
+          <sphereGeometry args={[0.052, 10, 8]} />
+        </mesh>
         <mesh geometry={shinGeo} material={M.pyjama} castShadow />
         <mesh geometry={footGeo} material={M.shoe} position={[0, -SHIN, 0]} castShadow />
       </group>

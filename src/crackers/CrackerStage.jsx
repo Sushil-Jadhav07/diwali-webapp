@@ -1,30 +1,39 @@
-// M2 placeholder: shows the placed cracker and finishes 4 s after lighting.
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useEffect } from 'react'
 import { useStore } from '../store/useStore'
+import Phuljhadi from './Phuljhadi'
+import Anar, { AnarModel } from './Anar'
+import Chakri, { ChakriModel } from './Chakri'
+import Rocket, { BottleModel } from './Rocket'
+import SkyShot, { SkyShotModel } from './SkyShot'
+import { fx } from './fx'
 
+const ACTIVE = { phuljhadi: Phuljhadi, anar: Anar, chakri: Chakri, rocket: Rocket, skyshot: SkyShot }
+const SPENT = { anar: AnarModel, chakri: ChakriModel, rocket: BottleModel, skyshot: SkyShotModel }
+
+// Renders the running cracker (keyed by sequence id so every run is fresh)
+// plus the burnt-out shells left on the ground until "Clear scene".
 export default function CrackerStage() {
   const current = useStore((s) => s.current)
-  return current && current.type !== 'phuljhadi' ? <Temp key={current.id} c={current} /> : current ? <TempHeld key={current.id} c={current} /> : null
-}
+  const spent = useStore((s) => s.spent)
+  const Active = current && ACTIVE[current.type]
 
-function Temp({ c }) {
-  const ref = useRef()
-  useFrame((s) => {
-    ref.current.visible = c.rt.placed
-    if (c.rt.litAt > 0 && s.clock.elapsedTime - c.rt.litAt > 4) c.rt.done = true
-  })
+  // Clearing the scene also wipes lingering smoke / sparks.
+  useEffect(() => {
+    if (spent.length === 0 && !current) fx.clear()
+  }, [spent, current])
+
   return (
-    <mesh ref={ref} position={[c.spot[0], 0.1, c.spot[1]]} visible={false}>
-      <cylinderGeometry args={[0.05, 0.08, 0.2, 10]} />
-      <meshStandardMaterial color="#c2410c" />
-    </mesh>
+    <group>
+      {Active && <Active key={current.id} c={current} />}
+      {spent.map((s) => {
+        const Model = SPENT[s.type]
+        if (!Model) return null
+        return (
+          <group key={s.id} position={[s.spot[0], 0, s.spot[1]]}>
+            <Model burnt />
+          </group>
+        )
+      })}
+    </group>
   )
-}
-function TempHeld({ c }) {
-  useFrame((s) => {
-    if (c.rt.litAt > 0) c.rt.burn = Math.min(1, (s.clock.elapsedTime - c.rt.litAt) / 4)
-    if (c.rt.litAt > 0 && s.clock.elapsedTime - c.rt.litAt > 4) c.rt.done = true
-  })
-  return null
 }
