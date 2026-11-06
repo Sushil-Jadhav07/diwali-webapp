@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { makeRangoliTexture, makeTileTexture } from './textures'
+import { RANGOLI_MAIN, RANGOLI_SMALL } from './society/layout'
 
 export default function Ground() {
   const tiles = useMemo(() => {
@@ -8,8 +9,8 @@ export default function Ground() {
     t.repeat.set(26, 26)
     return t
   }, [])
-  const rangoli = useMemo(() => makeRangoliTexture(3), [])
-  const rangoli2 = useMemo(() => makeRangoliTexture(21), [])
+  const rangoli = useMemo(() => makeRangoliTexture(3, { size: 2048, variant: 'main' }), [])
+  const rangoli2 = useMemo(() => makeRangoliTexture(21, { size: 1024, variant: 'small' }), [])
 
   return (
     <group>
@@ -18,26 +19,26 @@ export default function Ground() {
         <meshStandardMaterial map={tiles} roughness={0.78} metalness={0.02} color="#c9b6a6" />
       </mesh>
       {/* main rangoli in front of the central houses */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, -6.4]} receiveShadow>
-        <circleGeometry args={[1.7, 64]} />
+      <mesh rotation-x={-Math.PI / 2} position={[RANGOLI_MAIN.x, 0.012, RANGOLI_MAIN.z]} receiveShadow>
+        <circleGeometry args={[RANGOLI_MAIN.r, 96]} />
         <meshStandardMaterial
           map={rangoli}
           emissiveMap={rangoli}
           emissive="#ffffff"
-          emissiveIntensity={0.16}
+          emissiveIntensity={0.24}
           roughness={0.95}
           polygonOffset
           polygonOffsetFactor={-2}
         />
       </mesh>
       {/* small rangoli by the child's starting spot */}
-      <mesh rotation-x={-Math.PI / 2} position={[3.4, 0.012, 3.6]} receiveShadow>
-        <circleGeometry args={[0.9, 48]} />
+      <mesh rotation-x={-Math.PI / 2} position={[RANGOLI_SMALL.x, 0.012, RANGOLI_SMALL.z]} receiveShadow>
+        <circleGeometry args={[RANGOLI_SMALL.r, 64]} />
         <meshStandardMaterial
           map={rangoli2}
           emissiveMap={rangoli2}
           emissive="#ffffff"
-          emissiveIntensity={0.16}
+          emissiveIntensity={0.24}
           roughness={0.95}
           polygonOffset
           polygonOffsetFactor={-2}
@@ -47,4 +48,4 @@ export default function Ground() {
   )
 }
 
-export const RANGOLI_CENTER = new THREE.Vector3(0, 0, -6.4)
+export const RANGOLI_CENTER = new THREE.Vector3(RANGOLI_MAIN.x, 0, RANGOLI_MAIN.z)

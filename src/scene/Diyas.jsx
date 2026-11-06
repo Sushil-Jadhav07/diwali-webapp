@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { HOUSES, housePoint } from './Houses'
+import { MANDIR_DIYAS, RANGOLI_MAIN, RANGOLI_SMALL, WALL, mandirPoint } from './society/layout'
 
 // Clay diya bowl profile (lathe).
 const bowlGeo = (() => {
@@ -24,19 +25,29 @@ const flameGeo = (() => {
 
 export const DIYA_POSITIONS = (() => {
   const list = []
-  // ring around the main rangoli
-  for (let i = 0; i < 14; i++) {
-    const a = (i / 14) * Math.PI * 2
-    list.push(new THREE.Vector3(Math.cos(a) * 1.95, 0, -6.4 + Math.sin(a) * 1.95))
+  // ring around the main rangoli (skip the part tucked against the house plinth)
+  const R = RANGOLI_MAIN.r + 0.3
+  for (let i = 0; i < 20; i++) {
+    const a = (i / 20) * Math.PI * 2
+    const z = RANGOLI_MAIN.z + Math.sin(a) * R
+    if (z < -7.45) continue
+    list.push(new THREE.Vector3(RANGOLI_MAIN.x + Math.cos(a) * R, 0, z))
   }
   // ring around the small rangoli
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2
-    list.push(new THREE.Vector3(3.4 + Math.cos(a) * 1.1, 0, 3.6 + Math.sin(a) * 1.1))
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2
+    list.push(new THREE.Vector3(RANGOLI_SMALL.x + Math.cos(a) * (RANGOLI_SMALL.r + 0.2), 0, RANGOLI_SMALL.z + Math.sin(a) * (RANGOLI_SMALL.r + 0.2)))
   }
   // along every house plinth
   for (const h of HOUSES) {
     for (const lx of [-2.2, -1.2, 1.2, 2.2]) list.push(housePoint(h, lx, 0.4, 0.3))
+  }
+  // mandir steps, plinth edge and porch
+  for (const [x, y, z] of MANDIR_DIYAS) list.push(mandirPoint(x, y, z))
+  // on top of the front boundary wall
+  for (let x = 3.3; x <= 9.4; x += 1.25) {
+    list.push(new THREE.Vector3(x, WALL.h + 0.08, WALL.z))
+    list.push(new THREE.Vector3(-x, WALL.h + 0.08, WALL.z))
   }
   return list
 })()
