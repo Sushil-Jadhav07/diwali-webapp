@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { SparkleIcon } from './Icons'
 import { useStore } from '../store/useStore'
 import { audio } from '../audio/audio'
+import BrandLogo from './BrandLogo'
 
 export default function IntroOverlay() {
   const started = useStore((s) => s.started)
@@ -24,6 +25,7 @@ export default function IntroOverlay() {
             transition={{ type: 'spring', stiffness: 260, damping: 26, delay: 0.15 }}
             className="glass max-w-sm rounded-3xl p-6 text-center"
           >
+            <BrandLogo size="lg" className="mb-4" />
             <p className="font-hindi text-2xl font-semibold text-gold-300" lang="hi">
               शुभ दीपावली
             </p>

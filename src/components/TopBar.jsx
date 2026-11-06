@@ -1,6 +1,7 @@
 import { ReplayIcon, TrashIcon, SoundOnIcon, SoundOffIcon } from './Icons'
 import { useStore, isBusy } from '../store/useStore'
 import { audio } from '../audio/audio'
+import BrandLogo from './BrandLogo'
 
 function IconButton({ label, onClick, disabled, children }) {
   return (
@@ -29,18 +30,14 @@ export default function TopBar() {
 
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-3 md:p-4">
-      <div className="glass pointer-events-auto flex min-w-0 items-center gap-2.5 rounded-2xl px-3 py-2 md:px-4">
-        <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden="true">
-          <path d="M16 3c3 5 5 8 5 11a5 5 0 0 1-10 0c0-3 2-6 5-11z" fill="#fcd776" />
-          <path d="M16 9c1.4 2.4 2.2 3.8 2.2 5.2a2.2 2.2 0 0 1-4.4 0c0-1.4.8-2.8 2.2-5.2z" fill="#fff7e6" />
-          <path d="M4 19h24c-1 6-6 10-12 10S5 25 4 19z" fill="#c2410c" />
-          <path d="M7 21.5h18" stroke="#fcd776" strokeWidth="1.2" />
-        </svg>
+      <div className="glass pointer-events-auto flex min-w-0 items-center gap-2.5 rounded-2xl px-2.5 py-2 md:gap-3 md:px-3">
+        <BrandLogo />
+        <span className="hidden h-8 w-px shrink-0 bg-gold-400/25 sm:block" aria-hidden="true" />
         <div className="min-w-0 leading-tight">
           <h1 className="truncate font-display text-[15px] font-semibold text-gold-200 md:text-lg">
             Diwali Cracker Playground
           </h1>
-          <p className="font-hindi text-xs text-gold-400/90" lang="hi">
+          <p className="truncate font-hindi text-xs text-gold-400/90" lang="hi">
             शुभ दीपावली · Happy Diwali
           </p>
         </div>
