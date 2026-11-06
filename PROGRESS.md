@@ -14,6 +14,19 @@ Plan: docs/superpowers/plans/2026-11-06-master-pass.md (world plan with coordina
 - [ ] Stage 6 — 25-40 residents, life director, NPC cracker events, ambient sound + toggle
 - [ ] Stage 7 — performance/quality setting, mobile, loading screen, CREDITS/README, build + verification
 
+## QUEUED: FINAL PASS (user, 2026-11-06) — start only after every MASTER PASS stage above is checked
+Full spec: docs/superpowers/plans/2026-11-06-final-pass-spec.md
+- [ ] F1 full-screen + compact sidebar (64px icons, expands to ~260px), slim top bar, F fullscreen / H hide UI / Tab sidebar, quality tiers Low/Med/High/Ultra (auto + localStorage), language switcher EN/HI/MR (src/i18n)
+- [ ] F2 jump (Space / mobile button) with lit-cracker safety block
+- [ ] F3 realism pass (CC0 PBR textures, sky, AO, grain, wet ground, detail, characters) + time-of-day slider (sunset -> late night)
+- [ ] F4 big central aakash kandil, more kandils/sky lanterns, several rangoli designs
+- [ ] F5 always-on ambient sky fireworks (own budget, tier density, toggle)
+- [ ] F6 diya lighting game (counter, celebration) + Lakshmi Puja aarti scene at the mandir
+- [ ] F7 rangoli making mode (symmetry, templates, undo/redo, save/load)
+- [ ] F8 friends & greetings, music/ambience/effects with sliders
+- [ ] F9 finale show (countdown, grand sequence) + safety tips (3 languages)
+- [ ] F10 final perf pass, README, CREDITS, build + verification
+
 ## Milestones
 - [x] M1 — Vite + React + Tailwind setup, 3D night scene, sidebar UI, orbit/follow camera
 - [x] M2 — Child model, animations, state machine, walking & placing flow
