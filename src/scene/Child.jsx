@@ -5,76 +5,21 @@ import { useStore } from '../store/useStore'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 import { HOME, rig, damp } from './shared'
 import { audio } from '../audio/audio'
+import { fx } from '../crackers/fx'
+import { M, THIGH, SHIN, FOOT_H, Torso, Hem, Leg, Arm, Head } from './childBody'
 
 // ---------------------------------------------------------------------------
-// Aarav: a stylised low-poly boy in a kurta, built from primitives with a
+// Aarav: a stylised boy in a kurta (body parts in childBody.jsx) driven by a
 // joint hierarchy and procedural poses (no external rig needed).
 // Also the sequence DIRECTOR: the only place phases advance.
 // Local +Z is the facing direction.
 // ---------------------------------------------------------------------------
 
-const THIGH = 0.28
-const SHIN = 0.28
-const FOOT_H = 0.05
 const WALK_SPEED = 1.35
 const RUN_SPEED = 3.3
 
-const M = {
-  skin: new THREE.MeshStandardMaterial({ color: '#b97a4e', roughness: 0.7 }),
-  hair: new THREE.MeshStandardMaterial({ color: '#17100b', roughness: 0.6 }),
-  kurta: new THREE.MeshStandardMaterial({ color: '#e0662a', roughness: 0.75 }),
-  trim: new THREE.MeshStandardMaterial({ color: '#f5c04a', roughness: 0.4, metalness: 0.5 }),
-  pyjama: new THREE.MeshStandardMaterial({ color: '#efe5d0', roughness: 0.85 }),
-  shoe: new THREE.MeshStandardMaterial({ color: '#7a3b16', roughness: 0.6 }),
-  eye: new THREE.MeshBasicMaterial({ color: '#120a06' }),
-  white: new THREE.MeshBasicMaterial({ color: '#f5efe6' }),
-  mouth: new THREE.MeshBasicMaterial({ color: '#6a2418' }),
-  tilak: new THREE.MeshBasicMaterial({ color: '#d1122f' }),
-  stick: new THREE.MeshStandardMaterial({ color: '#3a2316', roughness: 0.9 }),
-  ember: new THREE.MeshBasicMaterial({ color: [5, 1.4, 0.3], toneMapped: false }),
-  wire: new THREE.MeshStandardMaterial({ color: '#8a8f99', roughness: 0.35, metalness: 0.8 }),
-  wireCoat: new THREE.MeshStandardMaterial({ color: '#5b5750', roughness: 0.9 }),
-}
-
-// Kurta shapes (lathe profiles: radius, height)
-const kurtaTopGeo = new THREE.LatheGeometry(
-  [
-    [0.0, 0.46],
-    [0.07, 0.46],
-    [0.14, 0.42],
-    [0.15, 0.3],
-    [0.135, 0.1],
-    [0.14, -0.02],
-  ].map(([x, y]) => new THREE.Vector2(x, y)),
-  14,
-)
-const kurtaHemGeo = new THREE.LatheGeometry(
-  [
-    [0.14, 0.04],
-    [0.165, -0.12],
-    [0.2, -0.3],
-    [0.205, -0.32],
-  ].map(([x, y]) => new THREE.Vector2(x, y)),
-  14,
-  0,
-  Math.PI * 2,
-)
-kurtaHemGeo.computeVertexNormals()
-
-const limb = (r1, r2, len) => {
-  const g = new THREE.CylinderGeometry(r1, r2, len, 8)
-  g.translate(0, -len / 2, 0)
-  return g
-}
-const thighGeo = limb(0.062, 0.052, THIGH)
-const shinGeo = limb(0.05, 0.04, SHIN)
-const upperArmGeo = limb(0.046, 0.04, 0.2)
-const foreArmGeo = limb(0.034, 0.03, 0.17)
-const footGeo = new THREE.BoxGeometry(0.08, 0.05, 0.17)
-footGeo.translate(0, -0.025, 0.035)
-
 // ---------- pose helpers ----------
-const JOINTS = ['thighL', 'thighR', 'kneeL', 'kneeR', 'spine', 'head', 'shLx', 'shLz', 'shRx', 'shRz', 'elLx', 'elRx', 'elLz', 'elRz', 'bounce', 'twist']
+const JOINTS = ['thighL', 'thighR', 'kneeL', 'kneeR', 'spine', 'head', 'headY', 'sway', 'shLx', 'shLz', 'shRx', 'shRz', 'elLx', 'elRx', 'elLz', 'elRz', 'bounce', 'twist']
 const blankPose = () => Object.fromEntries(JOINTS.map((j) => [j, 0]))
 
 function poseIdle(p, t) {
@@ -82,6 +27,9 @@ function poseIdle(p, t) {
   p.kneeL = p.kneeR = 0.06
   p.spine = 0.03 + Math.sin(t * 1.6) * 0.015
   p.head = Math.sin(t * 0.7) * 0.05
+  // looks around and shifts weight a little
+  p.headY = Math.sin(t * 0.37) * 0.28 + Math.sin(t * 0.91) * 0.08
+  p.sway = Math.sin(t * 0.8) * 0.025
   p.shLz = 0.1
   p.shRz = -0.1
   p.elLx = p.elRx = -0.2
@@ -166,7 +114,7 @@ export default function Child() {
   const cur = useMemo(blankPose, [])
   const tgt = useMemo(blankPose, [])
   const local = useMemo(
-    () => ({ phase: null, t: 0, gait: 0, gaitAmp: 0, speed: 0, yawT: Math.PI, target: new THREE.Vector3() }),
+    () => ({ phase: null, t: 0, gait: 0, gaitAmp: 0, speed: 0, yawT: Math.PI, blinkT: 0, nextBlink: 2, mouth: 0 }),
     [],
   )
   const set = (name) => (el) => (j.current[name] = el)
@@ -356,6 +304,8 @@ export default function Child() {
     J.spine.rotation.x = cur.spine
     J.spine.rotation.y = cur.twist
     J.head.rotation.x = cur.head
+    J.head.rotation.y = cur.headY
+    J.spine.rotation.z = cur.sway
     J.shL.rotation.set(cur.shLx, 0, cur.shLz)
     J.shR.rotation.set(cur.shRx, 0, cur.shRz)
     J.elL.rotation.set(cur.elLx, 0, cur.elLz)
@@ -385,6 +335,28 @@ export default function Child() {
       sparkTip.current.position.y = -0.33 * (1 - burn * 0.8)
       burnt.current.scale.y = Math.max(0.001, burn * 0.8)
     }
+
+    // ----- life: breathing, blinks, expressions, fingers -----
+    const excited = phase === 'waiting' || phase === 'celebrating' || running
+    const br = Math.sin(time * (excited ? 4.2 : 1.7))
+    J.chest.scale.set(1 + br * 0.012, 1 + br * 0.006, 1 + br * 0.016)
+    if (time > local.nextBlink) {
+      local.blinkT = 0.13
+      local.nextBlink = time + 2 + Math.random() * 3.5
+    }
+    local.blinkT = Math.max(0, local.blinkT - dt)
+    const squint = phase === 'waiting' && !def?.held && !def?.aerial ? 0.55 : 1
+    J.eyes.scale.y = damp(J.eyes.scale.y, local.blinkT > 0 ? 0.1 : squint, 35, dt)
+    const wow = phase === 'celebrating' ? 0.9 + 0.1 * Math.sin(time * 14) : phase === 'waiting' && fx.flash > 0.25 ? 0.8 : 0
+    local.mouth = damp(local.mouth, wow, 10, dt)
+    J.mouthOpen.scale.y = Math.max(0.001, local.mouth)
+    J.smile.visible = local.mouth < 0.3
+    J.browL.position.y = J.browR.position.y = 0.128 + local.mouth * 0.009
+    const relax = 0.35 + Math.sin(time * 1.3) * 0.05
+    const cheer = phase === 'celebrating' ? 0.08 : null
+    const holdR = stickR.current.visible || sparkler.current.visible
+    curlFingers(J, 'R', -1, holdR ? 1.45 : (cheer ?? relax), dt)
+    curlFingers(J, 'L', 1, stickL.current.visible ? 1.45 : (cheer ?? (phase === 'waiting' ? 0.22 : relax)), dt)
   })
 
   // expose attachment points
@@ -403,25 +375,13 @@ export default function Child() {
   return (
     <group ref={root} position={[HOME.x, 0, HOME.z]} rotation-y={Math.PI}>
       <group ref={hips} position={[0, 0.61, 0]}>
-        {/* legs */}
         <Leg side={1} set={set} />
         <Leg side={-1} set={set} />
-        <mesh ref={hem} material={M.kurta} geometry={kurtaHemGeo} castShadow />
+        <Hem hemRef={hem} />
         <group ref={set('spine')}>
-          <mesh material={M.kurta} geometry={kurtaTopGeo} castShadow />
-          {/* placket + collar trim */}
-          <mesh material={M.trim} position={[0, 0.3, 0.142]}>
-            <boxGeometry args={[0.03, 0.22, 0.01]} />
-          </mesh>
-          <mesh material={M.trim} position={[0, 0.455, 0]} rotation-x={Math.PI / 2}>
-            <torusGeometry args={[0.068, 0.012, 6, 16]} />
-          </mesh>
-          {/* neck */}
-          <mesh material={M.skin} position={[0, 0.5, 0]}>
-            <cylinderGeometry args={[0.04, 0.045, 0.08, 8]} />
-          </mesh>
+          <Torso set={set} />
           <group ref={set('head')} position={[0, 0.53, 0]}>
-            <Head />
+            <Head set={set} />
           </group>
           <Arm side={1} set={set}>
             {/* left hand: incense stick used to light the sparkler */}
@@ -468,93 +428,12 @@ export default function Child() {
   )
 }
 
-function Leg({ side, set }) {
-  const s = side === 1 ? 'L' : 'R'
-  return (
-    <group ref={set('thigh' + s)} position={[0.075 * side, 0, 0]}>
-      <mesh geometry={thighGeo} material={M.pyjama} castShadow />
-      <group ref={set('knee' + s)} position={[0, -THIGH, 0]}>
-        <mesh material={M.pyjama}>
-          <sphereGeometry args={[0.052, 10, 8]} />
-        </mesh>
-        <mesh geometry={shinGeo} material={M.pyjama} castShadow />
-        <mesh geometry={footGeo} material={M.shoe} position={[0, -SHIN, 0]} castShadow />
-      </group>
-    </group>
-  )
-}
-
-function Arm({ side, set, onHand, children }) {
-  const s = side === 1 ? 'L' : 'R'
-  return (
-    <group ref={set('sh' + s)} position={[0.165 * side, 0.4, 0]}>
-      <mesh geometry={upperArmGeo} material={M.kurta} castShadow />
-      <group ref={set('el' + s)} position={[0, -0.2, 0]}>
-        <mesh geometry={foreArmGeo} material={M.skin} castShadow />
-        <mesh material={M.trim} position={[0, -0.005, 0]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.02, 8]} />
-        </mesh>
-        <group ref={onHand} position={[0, -0.19, 0]}>
-          <mesh material={M.skin} scale={[1, 1.15, 0.85]}>
-            <sphereGeometry args={[0.035, 10, 8]} />
-          </mesh>
-          {children}
-        </group>
-      </group>
-    </group>
-  )
-}
-
-function Head() {
-  return (
-    <group>
-      <mesh material={M.skin} position={[0, 0.1, 0]} scale={[1, 1.08, 1]} castShadow>
-        <sphereGeometry args={[0.115, 20, 16]} />
-      </mesh>
-      {/* hair cap */}
-      <mesh material={M.hair} position={[0, 0.125, -0.012]} scale={[1.06, 1.0, 1.06]}>
-        <sphereGeometry args={[0.118, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.52]} />
-      </mesh>
-      {/* fringe */}
-      <mesh material={M.hair} position={[0.0, 0.19, 0.08]} rotation-x={0.5} scale={[1.6, 0.5, 0.6]}>
-        <sphereGeometry args={[0.05, 10, 6]} />
-      </mesh>
-      {/* ears */}
-      <mesh material={M.skin} position={[0.115, 0.095, 0]} scale={[0.5, 1, 0.8]}>
-        <sphereGeometry args={[0.028, 8, 6]} />
-      </mesh>
-      <mesh material={M.skin} position={[-0.115, 0.095, 0]} scale={[0.5, 1, 0.8]}>
-        <sphereGeometry args={[0.028, 8, 6]} />
-      </mesh>
-      {/* eyes */}
-      {[1, -1].map((s) => (
-        <group key={s} position={[0.042 * s, 0.11, 0.1]}>
-          <mesh material={M.white} scale={[1, 1.1, 0.5]}>
-            <sphereGeometry args={[0.018, 10, 8]} />
-          </mesh>
-          <mesh material={M.eye} position={[0, -0.001, 0.008]}>
-            <sphereGeometry args={[0.011, 8, 6]} />
-          </mesh>
-        </group>
-      ))}
-      {/* brows */}
-      {[1, -1].map((s) => (
-        <mesh key={s} material={M.hair} position={[0.043 * s, 0.142, 0.103]} rotation-z={0.15 * s}>
-          <boxGeometry args={[0.032, 0.007, 0.006]} />
-        </mesh>
-      ))}
-      {/* nose */}
-      <mesh material={M.skin} position={[0, 0.085, 0.115]} scale={[0.8, 1, 1]}>
-        <sphereGeometry args={[0.014, 8, 6]} />
-      </mesh>
-      {/* smile */}
-      <mesh material={M.mouth} position={[0, 0.052, 0.103]} rotation={[0.25, 0, Math.PI]}>
-        <torusGeometry args={[0.024, 0.0055, 6, 12, Math.PI]} />
-      </mesh>
-      {/* tilak */}
-      <mesh material={M.tilak} position={[0, 0.162, 0.106]}>
-        <sphereGeometry args={[0.007, 6, 4]} />
-      </mesh>
-    </group>
-  )
+// Curl the four fingers (and thumb) of one hand toward the palm.
+function curlFingers(J, s, side, target, dt) {
+  for (let i = 0; i < 4; i++) {
+    const f = J[`f${s}${i}`]
+    if (f) f.rotation.z = damp(f.rotation.z, -side * target * (0.9 + i * 0.08), 14, dt)
+  }
+  const th = J[`th${s}`]
+  if (th) th.rotation.x = damp(th.rotation.x, 0.55 + target * 0.5, 14, dt)
 }
