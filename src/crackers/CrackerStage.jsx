@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { useStore } from '../store/useStore'
+import { CRACKER_BY_ID } from './catalog'
 import Phuljhadi from './Phuljhadi'
-import Anar, { AnarDeluxe, AnarDeluxeModel, AnarModel } from './Anar'
-import Chakri, { ChakriDeluxe, ChakriDeluxeModel, ChakriModel } from './Chakri'
+import { AnarModel, Fountain } from './Anar'
+import { ChakriModel, Spinner } from './Chakri'
 import Rocket, { BottleModel } from './Rocket'
 import SkyShot, { SkyShotModel } from './SkyShot'
 import AsynkShot, { AsynkShotModel } from './AsynkShot'
@@ -10,46 +11,75 @@ import ColorShower, { ColorShowerModel } from './ColorShower'
 import Snake, { SnakeSpent } from './Snake'
 import Cake, { CakeModel } from './Cake'
 import RocketBundle, { BundleStandModel } from './RocketBundle'
-import { Bijli, BombScraps, Sutli } from './Bombs'
+import { Bomb, BombScraps } from './Bombs'
 import Ladi, { LadiScraps } from './Ladi'
 import PopPop, { PopPopScraps } from './PopPop'
+import Shells, { ShellBoxModel } from './handlers/Shells'
+import CapGun from './handlers/CapGun'
 import { fx } from './fx'
 
-const ACTIVE = {
-  phuljhadi: Phuljhadi,
-  anar: Anar,
-  anardeluxe: AnarDeluxe,
-  colorshower: ColorShower,
-  chakri: Chakri,
-  chakrideluxe: ChakriDeluxe,
-  snake: Snake,
-  asynk: AsynkShot,
+// Registry kind -> behaviour handler. Every handler receives { c, cfg }.
+const HANDLERS = {
+  shells: Shells,
+  fountain: Fountain,
+  spinner: Spinner,
+  bomb: Bomb,
+  chain: Ladi,
+  capgun: CapGun,
+  sparkler: Phuljhadi,
   rocket: Rocket,
   rocketbundle: RocketBundle,
   skyshot: SkyShot,
   cake: Cake,
-  bijli: Bijli,
-  sutli: Sutli,
-  ladi: Ladi,
+  asynk: AsynkShot,
+  colorshower: ColorShower,
+  snake: Snake,
   poppop: PopPop,
 }
-// Burnt-out shells left on the ground (receive `burnt` and `spot` props).
-const SPENT = {
-  anar: AnarModel,
-  anardeluxe: AnarDeluxeModel,
-  colorshower: ColorShowerModel,
-  chakri: ChakriModel,
-  chakrideluxe: ChakriDeluxeModel,
-  snake: SnakeSpent,
-  asynk: AsynkShotModel,
-  rocket: BottleModel,
-  rocketbundle: BundleStandModel,
-  skyshot: SkyShotModel,
-  cake: CakeModel,
-  bijli: BombScraps,
-  sutli: BombScraps,
-  ladi: LadiScraps,
-  poppop: PopPopScraps,
+
+// Burnt-out leftovers on the ground, by kind.
+function Spent({ s }) {
+  const def = CRACKER_BY_ID[s.type]
+  if (!def) return null
+  const p = def.params || {}
+  switch (def.kind) {
+    case 'fountain':
+      return (
+        <group scale={p.scale ?? 1}>
+          <AnarModel burnt variant={p.variant} />
+        </group>
+      )
+    case 'spinner':
+      return p.vertical ? null : (
+        <group scale={p.scale ?? 1}>
+          <ChakriModel burnt variant={p.variant} />
+        </group>
+      )
+    case 'shells':
+      return <ShellBoxModel burnt model={p.model} />
+    case 'bomb':
+      return <BombScraps spot={s.spot} />
+    case 'chain':
+      return <LadiScraps spot={s.spot} from={s.from} />
+    case 'rocket':
+      return <BottleModel />
+    case 'rocketbundle':
+      return <BundleStandModel burnt />
+    case 'skyshot':
+      return <SkyShotModel burnt />
+    case 'cake':
+      return <CakeModel burnt />
+    case 'asynk':
+      return <AsynkShotModel burnt />
+    case 'colorshower':
+      return <ColorShowerModel burnt />
+    case 'snake':
+      return <SnakeSpent spot={s.spot} />
+    case 'poppop':
+      return <PopPopScraps spot={s.spot} />
+    default:
+      return null
+  }
 }
 
 // Renders the running cracker (keyed by sequence id so every run is fresh)
@@ -57,7 +87,8 @@ const SPENT = {
 export default function CrackerStage() {
   const current = useStore((s) => s.current)
   const spent = useStore((s) => s.spent)
-  const Active = current && ACTIVE[current.type]
+  const def = current && CRACKER_BY_ID[current.type]
+  const Active = def && HANDLERS[def.kind]
 
   // Clearing the scene also wipes lingering smoke / sparks.
   useEffect(() => {
@@ -66,16 +97,12 @@ export default function CrackerStage() {
 
   return (
     <group>
-      {Active && <Active key={current.id} c={current} />}
-      {spent.map((s) => {
-        const Model = SPENT[s.type]
-        if (!Model) return null
-        return (
-          <group key={s.id} position={[s.spot[0], 0, s.spot[1]]}>
-            <Model burnt spot={s.spot} from={s.from} />
-          </group>
-        )
-      })}
+      {Active && <Active key={current.id} c={current} cfg={def.params} />}
+      {spent.map((s) => (
+        <group key={s.id} position={[s.spot[0], 0, s.spot[1]]}>
+          <Spent s={s} />
+        </group>
+      ))}
     </group>
   )
 }

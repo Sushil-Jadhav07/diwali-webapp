@@ -67,6 +67,7 @@ class SparkPool {
     this.pos = new Float32Array(n * 3)
     this.vel = new Float32Array(n * 3)
     this.col = new Float32Array(n * 3)
+    this.col2 = new Float32Array(n * 3) // colour at end of life (colour-changing stars)
     this.life = new Float32Array(n)
     this.maxLife = new Float32Array(n)
     this.drag = new Float32Array(n)
@@ -147,10 +148,16 @@ class SparkPool {
     this.size[i] = size
     this.trail[i] = trail
     this.twinkle[i] = twinkle
+    this.col2[i3] = r
+    this.col2[i3 + 1] = g
+    this.col2[i3 + 2] = b
+    return i
   }
 
   update(dt, time) {
-    const { pos, vel, col, life, maxLife, drag, grav, size, trail, twinkle, linePos, lineCol, ptPos, ptCol, ptSize } = this
+    const { pos, vel, col, col2, life, maxLife, drag, grav, size, trail, twinkle, linePos, lineCol, ptPos, ptCol, ptSize } = this
+    const wx = fx.wind.x * dt
+    const wz = fx.wind.z * dt
     let alive = 0
     for (let i = 0; i < this.n; i++) {
       const i3 = i * 3
@@ -169,9 +176,9 @@ class SparkPool {
       alive++
       life[i] -= dt
       const k = Math.exp(-drag[i] * dt)
-      let vx = vel[i3] * k
+      let vx = vel[i3] * k + wx * grav[i]
       let vy = vel[i3 + 1] * k + GRAVITY * grav[i] * dt
-      let vz = vel[i3 + 2] * k
+      let vz = vel[i3 + 2] * k + wz * grav[i]
       let x = pos[i3] + vx * dt
       let y = pos[i3 + 1] + vy * dt
       let z = pos[i3 + 2] + vz * dt
@@ -197,9 +204,10 @@ class SparkPool {
         const s = Math.sin(time * 45 + i * 12.9898)
         bright *= s > 0.2 ? 1.6 : 0.15
       }
-      const r = (col[i3] + hot * 2) * bright
-      const g = (col[i3 + 1] + hot * 2) * bright
-      const b = (col[i3 + 2] + hot * 2) * bright
+      const mix = 1 - t // 0 at birth -> 1 at death
+      const r = (col[i3] + (col2[i3] - col[i3]) * mix + hot * 2) * bright
+      const g = (col[i3 + 1] + (col2[i3 + 1] - col[i3 + 1]) * mix + hot * 2) * bright
+      const b = (col[i3 + 2] + (col2[i3 + 2] - col[i3 + 2]) * mix + hot * 2) * bright
 
       const tl = trail[i]
       linePos[i6] = x
@@ -417,8 +425,16 @@ export const fx = {
   },
 
   spark(...a) {
-    this.sparks.emit(...a)
+    return this.sparks.emit(...a)
   },
+  // set the end-of-life colour of spark i (returned by spark())
+  sparkEnd(i, r, g, b) {
+    const c = this.sparks.col2
+    c[i * 3] = r
+    c[i * 3 + 1] = g
+    c[i * 3 + 2] = b
+  },
+  wind: { x: 0.35, z: 0.08 },
   puff(...a) {
     this.smoke.emit(...a)
   },

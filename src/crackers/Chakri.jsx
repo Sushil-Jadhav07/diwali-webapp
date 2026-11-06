@@ -9,7 +9,7 @@ import { audio } from '../audio/audio'
 const MIX = [COLORS.gold, COLORS.gold, COLORS.gold, COLORS.green, COLORS.green, COLORS.red]
 const CYCLE = [COLORS.gold, COLORS.green, COLORS.red, COLORS.blue, COLORS.pink, COLORS.cyan]
 
-const BASE = {
+export const SPINNER_BASE = {
   fuse: 2.8,
   spinUp: 1.0,
   burn: 6.0,
@@ -28,8 +28,8 @@ const BASE = {
   glowR: 1.3,
   variant: 'classic',
 }
-const DELUXE = {
-  ...BASE,
+export const SPINNER_DELUXE = {
+  ...SPINNER_BASE,
   fuse: 3.0,
   burn: 8.5,
   omega0: 12,
@@ -78,7 +78,9 @@ export function ChakriDeluxeModel({ burnt }) {
   )
 }
 
-function Spinner({ c, cfg }) {
+// Generic spinner handler (registry kind 'spinner'). cfg.vertical = a wheel on
+// a stake spinning in the vertical plane (hub at cfg.hubY).
+export function Spinner({ c, cfg }) {
   const g = useRef()
   const spinner = useRef()
   const fuse = useRef()
@@ -130,9 +132,12 @@ function Spinner({ c, cfg }) {
     s.omega = (cfg.omega0 + cfg.omegaGain * spinT) * (F < cfg.burn ? 1 : 0.2) * (0.4 + 0.6 * I)
     s.angle += s.omega * dt
     // wobble/drift across the ground like a real chakri
-    s.x += Math.sin(F * 1.7) * cfg.drift * dt * I
-    s.z += Math.cos(F * 1.3) * cfg.drift * dt * I
-    spinner.current.rotation.y = -s.angle
+    if (!cfg.vertical) {
+      s.x += Math.sin(F * 1.7) * cfg.drift * dt * I
+      s.z += Math.cos(F * 1.3) * cfg.drift * dt * I
+    }
+    if (cfg.vertical) spinner.current.rotation.z = -s.angle
+    else spinner.current.rotation.y = -s.angle
     spinner.current.position.set(s.x - x0, 0, s.z - z0)
 
     // colour phase for the deluxe variant
@@ -144,6 +149,15 @@ function Spinner({ c, cfg }) {
     while (R.acc.v >= 1) {
       R.acc.v -= 1
       const a = s.angle + Math.random() * 0.3
+      if (cfg.vertical) {
+        // wheel in the XY plane: sparks fly off tangentially and fall
+        const sp = rand(3, 6)
+        const col = cfg.cycle ? (Math.random() < 0.75 ? hue : COLORS.gold) : MIX[(Math.random() * MIX.length) | 0]
+        const ca = Math.cos(-a)
+        const sa = Math.sin(-a)
+        fx.spark(s.x + ca * cfg.rim, cfg.hubY + sa * cfg.rim, s.z, -sa * sp, ca * sp, rand(-0.5, 0.5), rand(0.4, 0.9), col[0], col[1], col[2], 0.05, 1.0, 0.9, 0.05)
+        continue
+      }
       const px = s.x + Math.cos(a) * cfg.rim
       const pz = s.z - Math.sin(a) * cfg.rim
       const tx = -Math.sin(a)
@@ -190,8 +204,13 @@ function Spinner({ c, cfg }) {
   return (
     <group position={[x0, 0, z0]}>
       <group ref={g} visible={false}>
-        <group ref={spinner}>
-          <group scale={cfg.scale}>
+        {cfg.vertical && (
+          <mesh position={[0, cfg.hubY / 2, -0.03]} material={MAT.clay}>
+            <cylinderGeometry args={[0.012, 0.015, cfg.hubY, 6]} />
+          </mesh>
+        )}
+        <group ref={spinner} position-y={cfg.vertical ? cfg.hubY : 0}>
+          <group scale={cfg.scale} rotation-x={cfg.vertical ? Math.PI / 2 : 0} position-y={cfg.vertical ? -0.02 : 0}>
             <ChakriModel variant={cfg.variant} />
             <mesh ref={fuse} position={[0.09, 0.025, 0]} rotation-z={Math.PI / 2} material={MAT.fuse}>
               <cylinderGeometry args={[0.004, 0.004, 0.05, 4]} />
@@ -205,9 +224,9 @@ function Spinner({ c, cfg }) {
 }
 
 export default function Chakri({ c }) {
-  return <Spinner c={c} cfg={BASE} />
+  return <Spinner c={c} cfg={SPINNER_BASE} />
 }
 
 export function ChakriDeluxe({ c }) {
-  return <Spinner c={c} cfg={DELUXE} />
+  return <Spinner c={c} cfg={SPINNER_DELUXE} />
 }

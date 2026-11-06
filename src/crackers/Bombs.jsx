@@ -66,21 +66,50 @@ export function SutliModel() {
   )
 }
 
-const BOMBS = {
+export const BOMBS = {
   bijli: { fuse: 3.0, power: 1.3, ring: 4.2, ringDur: 0.65, flash: 3.2, light: 260, sky: 0.45, shake: 0.38, sound: 'bang', paper: COLORS.red, end: 2.6 },
   sutli: { fuse: 4.6, power: 1.9, ring: 6.5, ringDur: 0.9, flash: 4.5, light: 330, sky: 0.65, shake: 0.55, sound: 'sutliBoom', paper: COLORS.orange, end: 3.4 },
 }
 
 const _white = new THREE.Color(1, 0.88, 0.7)
 
-function Bomb({ c, kind }) {
-  const cfg = BOMBS[kind]
+const laxmiRed = new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.65 })
+const laxmiGold = new THREE.MeshStandardMaterial({ color: '#e7b341', roughness: 0.35, metalness: 0.6 })
+function LaxmiModel() {
+  return (
+    <group>
+      <mesh position-y={0.06} material={laxmiRed} castShadow>
+        <cylinderGeometry args={[0.032, 0.032, 0.12, 14]} />
+      </mesh>
+      <mesh position-y={0.06} material={laxmiGold}>
+        <cylinderGeometry args={[0.0335, 0.0335, 0.04, 14]} />
+      </mesh>
+    </group>
+  )
+}
+export function BombModel({ model = 'bijli' }) {
+  if (model === 'sutli') return <SutliModel />
+  if (model === 'atom')
+    return (
+      <group scale={1.4}>
+        <SutliModel />
+      </group>
+    )
+  if (model === 'laxmi') return <LaxmiModel />
+  return <BijliModel />
+}
+
+// Generic bomb handler (registry kind 'bomb'). cfg: fuse, power, ring, ringDur,
+// flash, light, sky, shake, sound, paper, end, model, fuseTop, dust, mushroom.
+export function Bomb({ c, kind, cfg: given }) {
+  const cfg = given || BOMBS[kind]
   const g = useRef()
   const fuse = useRef()
   const shock = useRef(-1)
   const R = useCrackerResources()
   const [x, z] = c.spot
-  const fuseTop = kind === 'sutli' ? 0.13 : 0.1
+  const fuseTop = cfg.fuseTop ?? (kind === 'sutli' ? 0.13 : 0.1)
+  const model = cfg.model || kind
 
   useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 1 / 20)
@@ -105,10 +134,15 @@ function Bomb({ c, kind }) {
       fx.burstLight(x, 0.6, z, _white, cfg.light, 0.45, 30)
       fx.skyFlash(_white, cfg.sky)
       fx.addShake(cfg.shake)
-      if (kind === 'sutli') {
+      if (cfg.dust || kind === 'sutli') {
         // tall dust column + twine fragments
         for (let i = 0; i < 22; i++) fx.puff(x + rand(-0.2, 0.2), rand(0.1, 1.2), z + rand(-0.2, 0.2), rand(-0.4, 0.4), rand(0.6, 1.6), rand(-0.4, 0.4), rand(3.5, 5.5), 0.45, 1.8, 0.3)
       }
+    }
+    // atom bomb: a rising mushroom of smoke
+    if (cfg.mushroom && F < 2.2 && Math.random() < dt * 30) {
+      const h = Math.min(4.5, F * 3.2)
+      fx.puff(x + rand(-0.3, 0.3), h, z + rand(-0.3, 0.3), rand(-0.6, 0.6), rand(0.2, 0.8), rand(-0.6, 0.6), rand(4, 6), 0.7, 2.2, 0.28)
     }
     // lingering smoke curling up from the crater
     if (F < 1.6 && Math.random() < dt * 10) fx.puff(x + rand(-0.1, 0.1), 0.08, z + rand(-0.1, 0.1), rand(-0.1, 0.1), rand(0.3, 0.6), rand(-0.1, 0.1), 3, 0.3, 1.5, 0.2)
@@ -118,9 +152,9 @@ function Bomb({ c, kind }) {
   return (
     <group position={[x, 0, z]}>
       <group ref={g} visible={false}>
-        {kind === 'sutli' ? <SutliModel /> : <BijliModel />}
+        <BombModel model={model} />
         <mesh ref={fuse} position={[0.01, fuseTop - 0.02, 0]} material={MAT.fuse}>
-          <cylinderGeometry args={[0.003, 0.003, kind === 'sutli' ? 0.08 : 0.05, 4]} />
+          <cylinderGeometry args={[0.003, 0.003, model === 'sutli' || model === 'atom' ? 0.08 : 0.05, 4]} />
         </mesh>
       </group>
       <ShockFX trigger={shock} radius={cfg.ring} duration={cfg.ringDur} flashSize={cfg.flash} />

@@ -483,6 +483,77 @@ function toWavUrl(samples) {
   return URL.createObjectURL(new Blob([ab], { type: 'audio/wav' }))
 }
 
+// Rolling sky thunder: a sharp crack, then a long low rumble with bumps.
+function thunder() {
+  const dur = 5.5
+  const b = buffer(dur)
+  let lp = 0
+  let lp2 = 0
+  const bumps = [0, 0.55, 1.2, 1.9, 2.7]
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    lp += (w - lp) * 0.03
+    lp2 += (lp - lp2) * 0.08
+    let env = Math.exp(-t * 0.65)
+    for (const at of bumps) if (t > at) env += 0.5 * Math.exp(-(t - at) * 3) * (t - at < 0.05 ? (t - at) / 0.05 : 1)
+    const crack = t < 0.02 ? w * (1 - t / 0.02) * 1.4 : 0
+    b[i] = lp2 * env * 5 + crack
+  }
+  return fadeEdges(normalize(reverb(b, 0.45, 0.88), 0.95), 120)
+}
+
+// Toy cap: a tiny dry click-snap (paper cap), deliberately not a gunshot.
+function capPop() {
+  const dur = 0.22
+  const b = buffer(dur)
+  let prev = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    const hp = w - prev
+    prev = w
+    const click = t < 0.004 ? (1 - t / 0.004) : 0
+    b[i] = hp * Math.exp(-t * 90) * 0.9 + click * 0.6 + Math.sin(t * 2 * Math.PI * 1900) * Math.exp(-t * 120) * 0.25
+  }
+  return fadeEdges(normalize(b, 0.7), 4)
+}
+
+// Siren fountain: a rising-and-falling whistle (loopable, 2 s).
+function siren() {
+  const dur = 2.0
+  const b = buffer(dur)
+  let ph = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const f = 1500 + 700 * Math.sin((t / dur) * Math.PI * 2 - Math.PI / 2)
+    ph += (2 * Math.PI * f) / SR
+    b[i] = Math.sin(ph) * 0.55 + Math.sin(ph * 2.02) * 0.1 + rnd() * 0.08
+  }
+  return fadeEdges(normalize(b, 0.6), 6)
+}
+
+// Gatling noise maker: a long rapid stream of small pops (~32 per second).
+function gatling() {
+  const dur = 9.5
+  const b = buffer(dur)
+  const n = b.length
+  for (let k = 0; k < 288; k++) {
+    const at = 0.15 + (k / 288) * 8.8 + rand01() * 0.02
+    const start = Math.floor(at * SR)
+    const len = 260 + Math.floor(rand01() * 200)
+    let prev = 0
+    for (let i = 0; i < len && start + i < n; i++) {
+      const w = rnd()
+      const hp = w - prev
+      prev = w
+      b[start + i] += hp * Math.exp((-7 * i) / len) * (0.55 + rand01() * 0.45)
+    }
+  }
+  return fadeEdges(normalize(reverb(b, 0.3, 0.8), 0.85), 60)
+}
+const rand01 = () => Math.random()
+
 export const SOUND_BUILDERS = {
   hiss: fuseHiss,
   crackle: sparklerCrackle,
@@ -505,6 +576,10 @@ export const SOUND_BUILDERS = {
   cakeShot,
   burstPop,
   screamer,
+  thunder,
+  capPop,
+  siren,
+  gatling,
 }
 
 export function renderSound(name) {

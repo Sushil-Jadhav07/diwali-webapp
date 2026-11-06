@@ -16,7 +16,7 @@ const redPaper = new THREE.MeshStandardMaterial({ color: '#c81e1e', roughness: 0
 const fuseMat = new THREE.MeshStandardMaterial({ color: '#6b5b3e', roughness: 0.9 })
 
 // chain layout (local to the spot): points running away from where the child stood
-function layout(spot, from) {
+function layout(spot, from, n = N, spacing = 0.045, wiggle = 0.12) {
   const dx = spot[0] - (from ? from[0] : HOME.x)
   const dz = spot[1] - (from ? from[1] : HOME.z)
   const L = Math.hypot(dx, dz) || 1
@@ -25,9 +25,9 @@ function layout(spot, from) {
   const px = -uz
   const pz = ux
   const pts = []
-  for (let i = 0; i < N; i++) {
-    const along = 0.05 + i * 0.045
-    const side = Math.sin(i * 0.45) * 0.12
+  for (let i = 0; i < n; i++) {
+    const along = 0.05 + i * spacing
+    const side = Math.sin(i * 0.45) * wiggle
     pts.push(new THREE.Vector3(ux * along + px * side, 0.012, uz * along + pz * side))
   }
   return { pts, yaw: Math.atan2(ux, uz) }
@@ -61,19 +61,23 @@ export function LadiModel({ spot = [0, 0], from, hidden }) {
   )
 }
 
-export default function Ladi({ c }) {
+// Generic chain handler (registry kind 'chain'): cfg.n crackers, cfg.gap [min,max]
+// seconds between bangs, cfg.spacing / cfg.wiggle for the laid-out string.
+export default function Ladi({ c, cfg = {} }) {
+  const n = cfg.n ?? N
+  const gap = cfg.gap ?? [0.07, 0.14]
   const g = useRef()
   const inst = useRef()
   const R = useCrackerResources()
   const [x, z] = c.spot
-  const { pts, yaw } = useMemo(() => layout(c.spot, c.from), [c.spot, c.from])
+  const { pts, yaw } = useMemo(() => layout(c.spot, c.from, n, cfg.spacing ?? 0.045, cfg.wiggle ?? 0.12), [c.spot, c.from, n, cfg.spacing, cfg.wiggle])
   const fuseGeo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 64, 0.004, 4, false), [pts])
   const FUSE = 2.6
   const times = useMemo(() => {
     const t = []
     let acc = 0
-    for (let i = 0; i < N; i++) {
-      acc += rand(0.07, 0.14)
+    for (let i = 0; i < n; i++) {
+      acc += rand(gap[0], gap[1])
       t.push(acc)
     }
     return t
@@ -85,7 +89,7 @@ export default function Ladi({ c }) {
     const q = new THREE.Quaternion()
     const e = new THREE.Euler()
     const one = new THREE.Vector3(1, 1, 1)
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < n; i++) {
       e.set(0, yaw + (i % 2 ? 0.7 : -0.7), Math.PI / 2, 'YXZ')
       q.setFromEuler(e)
       m.compose(pts[i], q, one)
@@ -110,7 +114,7 @@ export default function Ladi({ c }) {
     }
     const l = R.getLight()
     let changed = false
-    while (st.next < N && F >= times[st.next]) {
+    while (st.next < n && F >= times[st.next]) {
       const i = st.next++
       const p = pts[i]
       const bx = x + p.x
@@ -132,7 +136,7 @@ export default function Ladi({ c }) {
     }
     if (changed) inst.current.instanceMatrix.needsUpdate = true
     if (l) l.intensity *= Math.exp(-dt * 22)
-    if (st.next >= N && F > times[N - 1] + 1.4) {
+    if (st.next >= n && F > times[n - 1] + 1.4) {
       R.dropLight()
       rt.done = true
     }
@@ -141,7 +145,7 @@ export default function Ladi({ c }) {
   return (
     <group position={[x, 0, z]}>
       <group ref={g} visible={false}>
-        <instancedMesh ref={inst} args={[crackerGeo, redPaper, N]} castShadow />
+        <instancedMesh ref={inst} args={[crackerGeo, redPaper, n]} castShadow />
         <mesh geometry={fuseGeo} material={fuseMat} />
       </group>
     </group>

@@ -5,7 +5,7 @@ import { fx, rand } from './fx'
 import { COLORS, emitFuse, GroundGlow, MAT, useCrackerResources } from './common'
 
 // Anar (flowerpot) and its big "Anar Deluxe" variant share one config-driven effect.
-const BASE = {
+export const FOUNTAIN_BASE = {
   fuse: 3.0,
   ramp: 2.0,
   hold: 3.2,
@@ -22,8 +22,8 @@ const BASE = {
   glow: 2.2,
   variant: 'classic',
 }
-const DELUXE = {
-  ...BASE,
+export const FOUNTAIN_DELUXE = {
+  ...FOUNTAIN_BASE,
   fuse: 3.2,
   ramp: 2.5,
   hold: 5.0,
@@ -82,7 +82,10 @@ export function AnarDeluxeModel({ burnt }) {
   )
 }
 
-function Fountain({ c, cfg }) {
+// Generic fountain handler (registry kind 'fountain'). Optional cfg extras:
+// cycle/cycleT (palette changes), crackle (pops/s), siren (extra sound),
+// jelly (soft blobs/s), comets (comets/s), lightColor [r,g,b].
+export function Fountain({ c, cfg }) {
   const g = useRef()
   const fuse = useRef()
   const glow = useRef()
@@ -123,6 +126,8 @@ function Fountain({ c, cfg }) {
       fuse.current.visible = false
       R.stop('hiss', 150)
       R.play(cfg.sound)
+      if (cfg.siren) R.play(cfg.siren)
+      if (cfg.crackle) R.play('crackleBurst', { volume: 0.5 })
     }
 
     // intensity envelope: rise, hold, fade
@@ -134,7 +139,7 @@ function Fountain({ c, cfg }) {
 
     // fountain sparks
     R.acc.v += dt * cfg.rate * I
-    const pal = cfg.palette
+    const pal = cfg.cycle ? cfg.cycle[Math.floor(F / (cfg.cycleT || 1.6)) % cfg.cycle.length] : cfg.palette
     while (R.acc.v >= 1) {
       R.acc.v -= 1
       const spread = cfg.spread0 + cfg.spreadGain * I
@@ -149,6 +154,21 @@ function Fountain({ c, cfg }) {
       const col = COLORS[name]
       fx.spark(x, TOP, z, vx, vy, vz, rand(0.7, 1.5) * (0.55 + 0.45 * I), col[0], col[1], col[2], silver ? 0.045 : 0.06, 0.55, 0.85, 0.035, silver ? 1 : 0)
     }
+    // extras: crackle pops in the plume, soft jelly blobs, rising comets
+    if (cfg.crackle && Math.random() < dt * cfg.crackle * I) {
+      const h = TOP + rand(0.6, 2.4) * cfg.scale
+      const px = x + rand(-0.5, 0.5)
+      const pz = z + rand(-0.5, 0.5)
+      for (let k = 0; k < 4; k++) fx.spark(px, h, pz, rand(-1.5, 1.5), rand(-1.5, 1.5), rand(-1.5, 1.5), rand(0.05, 0.12), 6, 5.6, 4.8, 0.2, 2.5, 0, 0.02)
+    }
+    if (cfg.jelly && Math.random() < dt * cfg.jelly * I) {
+      const col = COLORS[pal[(Math.random() * pal.length) | 0]]
+      fx.spark(x, TOP, z, rand(-0.8, 0.8), rand(2.2, 3.4), rand(-0.8, 0.8), rand(1.6, 2.2), col[0] * 0.8, col[1] * 0.8, col[2] * 0.8, 0.3, 1.0, 0.45, 0.0)
+    }
+    if (cfg.comets && Math.random() < dt * cfg.comets * I) {
+      const col = COLORS[pal[(Math.random() * pal.length) | 0]]
+      fx.spark(x, TOP, z, rand(-1.2, 1.2), rand(8.5, 11.5), rand(-1.2, 1.2), rand(1.1, 1.5), col[0], col[1], col[2], 0.14, 0.4, 0.9, 0.12, 1)
+    }
     // smoke
     R.acc2.v += dt * (14 * I + 2)
     while (R.acc2.v >= 1 && F < END - 0.5) {
@@ -159,7 +179,8 @@ function Fountain({ c, cfg }) {
     const l = R.getLight()
     if (l) {
       l.position.set(x, 1.1 * cfg.scale, z)
-      l.color.setRGB(1, 0.72, 0.38)
+      if (cfg.lightColor) l.color.setRGB(...cfg.lightColor)
+      else l.color.setRGB(1, 0.72, 0.38)
       l.intensity = cfg.light * I * (0.85 + Math.random() * 0.3)
       l.distance = 16
     }
@@ -189,9 +210,9 @@ function Fountain({ c, cfg }) {
 }
 
 export default function Anar({ c }) {
-  return <Fountain c={c} cfg={BASE} />
+  return <Fountain c={c} cfg={FOUNTAIN_BASE} />
 }
 
 export function AnarDeluxe({ c }) {
-  return <Fountain c={c} cfg={DELUXE} />
+  return <Fountain c={c} cfg={FOUNTAIN_DELUXE} />
 }

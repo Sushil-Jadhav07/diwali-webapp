@@ -107,6 +107,18 @@ export default function Sidebar() {
             {busy ? PHASE_LABEL[phase] : 'Ready'}
           </span>
         </div>
+        <nav className="mb-2 flex gap-1 overflow-x-auto no-scrollbar" aria-label="Cracker categories">
+          {GROUPS.map((grp) => (
+            <button
+              key={grp.id}
+              type="button"
+              onClick={() => document.getElementById(`cat-${grp.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="min-h-9 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-semibold text-gold-200 transition-colors hover:border-gold-400/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-gold-300"
+            >
+              {grp.label}
+            </button>
+          ))}
+        </nav>
         <div className="no-scrollbar -mx-1 flex-1 overflow-y-auto overscroll-contain px-1 pb-1">
           {GROUPS.map((grp) => (
             <section key={grp.id} aria-labelledby={`cat-${grp.id}`} className="mb-3 last:mb-0">

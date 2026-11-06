@@ -141,10 +141,39 @@ const ICONS = {
   ),
 }
 
+ICONS.capgun = (
+  <>
+    <path d="M5 13 h17 a3 3 0 0 1 3 3 v1 h-12 l-2 8 h-5 l2-8 h-3 z" {...common} fill="#ef4444" fillOpacity=".45" />
+    <path d="M22 13 h6" {...common} strokeWidth={3} stroke="#facc15" />
+    <circle cx="18" cy="20" r="2" {...common} stroke="#dc2626" fill="#dc2626" fillOpacity=".6" />
+    <path d="M27 7 l1.5-2.5 M29.5 10 l2.5-1" {...common} stroke="#fde9b0" />
+  </>
+)
+ICONS.comet = (
+  <>
+    <circle cx="23" cy="8" r="3" fill="#fde9b0" stroke="none" />
+    <path d="M21 10 L6 26 M23 11 L11 27 M20 8 L5 22" {...common} stroke="#fcd776" strokeDasharray="2 2.5" />
+  </>
+)
+ICONS.thunder = (
+  <>
+    <path d="M18 3 L9 17 h6 l-3 12 L23 13 h-6 z" {...common} fill="#e5e7eb" fillOpacity=".35" stroke="#f8fafc" />
+    <path d="M4 9 a12 12 0 0 1 4-4 M28 9 a12 12 0 0 0-4-4" {...common} stroke="#93c5fd" />
+  </>
+)
+// registry crackers without their own drawing reuse the closest icon
+const ALIAS = {
+  bombrocket: 'rocket', multicolour: 'skyshot', mega: 'skyshot', peacock: 'cake', thunder: 'thunder', shots7: 'cake', shots3: 'cake',
+  starfire: 'comet', willow: 'skyshot', crossette: 'skyshot', strobe: 'skyshot', heart: 'skyshot', aakashtara: 'comet', romancandle: 'comet',
+  cake30: 'cake', cake120: 'cake', gatling: 'cake', minifountain: 'anar', towerpot: 'anardeluxe', cracklingking: 'anar', siren: 'colorshower',
+  jelly: 'colorshower', rungfusion: 'anardeluxe', wheel: 'chakrideluxe', laxmi: 'bijli', atom: 'sutli', ladi100: 'ladi', ladi1000: 'ladi',
+  mirchi: 'ladi', murga: 'ladi',
+}
+
 export default function CrackerIcon({ id, className = 'h-8 w-8' }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-      {ICONS[id]}
+      {ICONS[id] || ICONS[ALIAS[id]] || ICONS.skyshot}
     </svg>
   )
 }

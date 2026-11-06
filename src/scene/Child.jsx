@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { CRACKER_BY_ID } from '../crackers/catalog'
 import { HOME, rig, damp } from './shared'
 import { findPath, resolveCircle, AGENT_R } from '../world/collision'
-import { pushOutOfDanger } from '../world/safety'
+import { pushOutOfDanger, LIVE_PEOPLE } from '../world/safety'
 import { input, moveIntent, wantsRun } from '../world/input'
 import { START } from '../world/layout'
 import { audio } from '../audio/audio'
@@ -113,6 +113,8 @@ export default function Child() {
   const stickR = useRef()
   const stickL = useRef()
   const sparkler = useRef()
+  const capgun = useRef()
+  const capSpots = useRef([])
   const sparkTip = useRef()
   const burnt = useRef()
 
@@ -308,6 +310,29 @@ export default function Child() {
         const lift = Math.min(1, t / 0.7)
         tgt.shRx = -0.2 - 1.05 * lift
       }
+      if (def?.kind === 'capgun') {
+        // load the red cap roll with the left hand, then raise the toy to the sky
+        tgt.shRx = phase === 'placing' ? -1.2 : -2.55
+        tgt.elRx = -0.12
+        if (phase === 'placing') {
+          tgt.shLx = -1.25
+          tgt.shLz = -0.45
+          tgt.elLx = -0.9
+        } else {
+          tgt.shLx = 0
+          tgt.shLz = 0.12
+          tgt.elLx = -0.2
+        }
+        tgt.head = phase === 'placing' ? 0.2 : -0.3
+      }
+    } else if (phase === 'waiting' && def?.kind === 'capgun') {
+      // toy held up at the sky (no recoil); pull the trigger
+      poseIdle(tgt, time)
+      tgt.shRx = -2.55
+      tgt.shRz = -0.1
+      tgt.elRx = -0.12
+      tgt.head = -0.32
+      lambda = 9
     } else if (phase === 'waiting') {
       if (def?.held) {
         poseIdle(tgt, time)
@@ -327,6 +352,27 @@ export default function Child() {
       lambda = 12
     } else poseIdle(tgt, time)
 
+    // head look-at: the cracker while watching, nearby people now and then when idle
+    let lookX = null
+    let lookZ = null
+    if ((phase === 'waiting' || phase === 'lighting') && current && !def?.held) {
+      lookX = spotX
+      lookZ = spotZ
+    } else if (phase === 'idle' && !moving && Math.sin(time * 0.45) > 0.2) {
+      let best = 49
+      for (const p of LIVE_PEOPLE) {
+        const d2 = (p.x - rig.pos.x) ** 2 + (p.z - rig.pos.z) ** 2
+        if (d2 < best) {
+          best = d2
+          lookX = p.x
+          lookZ = p.z
+        }
+      }
+    }
+    if (lookX !== null) {
+      const a = angleDiff(rig.yaw, Math.atan2(lookX - rig.pos.x, lookZ - rig.pos.z))
+      tgt.headY = THREE.MathUtils.clamp(a, -0.95, 0.95)
+    }
     // blend gait in/out smoothly while moving
     for (const k of JOINTS) cur[k] = damp(cur[k], tgt[k], k === 'bounce' && phase === 'celebrating' ? 30 : lambda, dt)
 
@@ -362,8 +408,11 @@ export default function Child() {
     // props: incense stick, sparkler
     const ground = def && !def.held
     stickR.current.visible = !!ground && (phase === 'placing' || phase === 'lighting')
-    stickL.current.visible = !!def?.held && phase === 'lighting'
-    const showSparkler = !!def?.held && rt?.placed && !rt.done && phase !== 'idle'
+    stickL.current.visible = def?.kind === 'sparkler' && phase === 'lighting'
+    const showSparkler = def?.kind === 'sparkler' && rt?.placed && !rt.done && phase !== 'idle'
+    const showCap = def?.kind === 'capgun' && rt?.placed && !rt.done && phase !== 'idle'
+    capgun.current.visible = showCap
+    if (showCap) for (let k = 0; k < capSpots.current.length; k++) if (capSpots.current[k]) capSpots.current[k].visible = k < (rt.pulls || 0)
     sparkler.current.visible = showSparkler
     if (showSparkler) {
       const burn = rt.burn || 0
@@ -389,7 +438,7 @@ export default function Child() {
     J.browL.position.y = J.browR.position.y = 0.128 + local.mouth * 0.009
     const relax = 0.35 + Math.sin(time * 1.3) * 0.05
     const cheer = phase === 'celebrating' ? 0.08 : null
-    const holdR = stickR.current.visible || sparkler.current.visible
+    const holdR = stickR.current.visible || sparkler.current.visible || capgun.current.visible
     curlFingers(J, 'R', -1, holdR ? 1.45 : (cheer ?? relax), dt)
     curlFingers(J, 'L', 1, stickL.current.visible ? 1.45 : (cheer ?? (phase === 'waiting' ? 0.22 : relax)), dt)
   })
@@ -439,6 +488,9 @@ export default function Child() {
                 <sphereGeometry args={[0.012, 6, 4]} />
               </mesh>
             </group>
+            <group ref={capgun} visible={false} rotation-x={-1.57}>
+              <ToyCapGun spots={capSpots} />
+            </group>
             <group ref={sparkler} rotation-x={-0.7} visible={false}>
               <mesh material={M.wire} position={[0, -0.17, 0]}>
                 <cylinderGeometry args={[0.004, 0.004, 0.36, 4]} />
@@ -471,4 +523,53 @@ function curlFingers(J, s, side, target, dt) {
   }
   const th = J[`th${s}`]
   if (th) th.rotation.x = damp(th.rotation.x, 0.55 + target * 0.5, 14, dt)
+}
+
+// Bright, chunky toy cap gun (clearly a toy: candy colours, rounded, no realistic
+// detail). Barrel along local -Y from the fist; red paper cap roll on the side.
+const toy = {
+  red: new THREE.MeshStandardMaterial({ color: '#ef3b2c', roughness: 0.45 }),
+  yellow: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.4 }),
+  blue: new THREE.MeshStandardMaterial({ color: '#2563eb', roughness: 0.45 }),
+  orange: new THREE.MeshStandardMaterial({ color: '#fb923c', roughness: 0.4, emissive: '#7c2d12', emissiveIntensity: 0.4 }),
+  cap: new THREE.MeshStandardMaterial({ color: '#d1122f', roughness: 0.8 }),
+  burnt: new THREE.MeshBasicMaterial({ color: '#1a1210' }),
+}
+function ToyCapGun({ spots }) {
+  return (
+    <group position={[0, -0.02, 0.0]}>
+      {/* body */}
+      <mesh material={toy.red} position={[0, -0.05, 0.02]}>
+        <capsuleGeometry args={[0.026, 0.07, 4, 10]} />
+      </mesh>
+      {/* chunky yellow barrel with a bright orange safety tip */}
+      <mesh material={toy.yellow} position={[0, -0.12, 0.03]}>
+        <cylinderGeometry args={[0.015, 0.017, 0.07, 12]} />
+      </mesh>
+      <mesh material={toy.orange} position={[0, -0.162, 0.03]}>
+        <cylinderGeometry args={[0.018, 0.018, 0.016, 12]} />
+      </mesh>
+      {/* grip and trigger guard */}
+      <mesh material={toy.blue} position={[0, -0.01, -0.035]} rotation-x={0.35}>
+        <boxGeometry args={[0.03, 0.06, 0.035]} />
+      </mesh>
+      <mesh material={toy.blue} position={[0, -0.045, -0.012]} rotation-y={Math.PI / 2}>
+        <torusGeometry args={[0.013, 0.004, 6, 12]} />
+      </mesh>
+      {/* red paper cap roll + strip with burnt spots (one per pull) */}
+      <mesh material={toy.cap} position={[0.03, -0.03, 0.03]} rotation-z={Math.PI / 2}>
+        <cylinderGeometry args={[0.016, 0.016, 0.01, 14]} />
+      </mesh>
+      <mesh material={toy.cap} position={[0.031, -0.075, 0.03]}>
+        <boxGeometry args={[0.004, 0.07, 0.01]} />
+      </mesh>
+      {Array.from({ length: 10 }, (_, k) => (
+        <mesh key={k} ref={(el) => (spots.current[k] = el)} material={toy.burnt} position={[0.0335, -0.045 - k * 0.0065, 0.03]} visible={false}>
+          <boxGeometry args={[0.002, 0.004, 0.007]} />
+        </mesh>
+      ))}
+      {/* where the cap pops (just above the hammer) */}
+      <group ref={(el) => (rig.capPoint = el)} position={[0.02, -0.035, 0.05]} />
+    </group>
+  )
 }

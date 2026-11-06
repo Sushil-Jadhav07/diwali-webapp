@@ -1,16 +1,18 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { fx } from '../crackers/fx'
 import { rig } from './shared'
 
 const SKY = new THREE.Color('#3a3a8a')
+const FOG = new THREE.Color('#14102e')
 const GROUND = new THREE.Color('#5a3418') // warm bounce from string lights
 
 export default function SceneLights() {
   const hemi = useRef()
   const moon = useRef()
   const fill = useRef()
+  const scene = useThree((s) => s.scene)
   useFrame(() => {
     // moonlight shadow frustum follows the child (snapped to texels: no shimmer)
     const m = moon.current
@@ -25,6 +27,8 @@ export default function SceneLights() {
     if (fill.current) fill.current.position.set(rig.pos.x + 1.5, 2.6, rig.pos.z + 3)
     // firework flash lights the whole scene from above
     const f = fx.flash
+    // the night air (fog) picks up a hint of the burst colour too
+    if (scene.fog) scene.fog.color.copy(FOG).lerp(fx.flashColor, Math.min(0.5, f * 0.18))
     hemi.current.intensity = 0.8 + f * 0.9
     hemi.current.color.copy(SKY).lerp(fx.flashColor, Math.min(1, f * 0.6))
   })

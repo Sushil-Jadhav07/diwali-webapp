@@ -39,9 +39,11 @@ export const setLightColor = (out, c) => out.setRGB(Math.min(1, c[0] / 3), Math.
 
 // Owns sound ids and a pooled light for one cracker; cleans up on unmount.
 export function useCrackerResources() {
-  const res = useMemo(() => ({ sounds: [], light: null, acc: { v: 0 }, acc2: { v: 0 }, acc3: { v: 0 }, flags: {} }), [])
+  const res = useMemo(() => ({ sounds: [], timers: [], light: null, acc: { v: 0 }, acc2: { v: 0 }, acc3: { v: 0 }, flags: {} }), [])
   useEffect(
     () => () => {
+      for (const t of res.timers) clearTimeout(t)
+      res.timers.length = 0
       for (const [name, id] of res.sounds) audio.stop(name, id)
       res.sounds.length = 0
       if (res.light) fx.releaseLight(res.light)
@@ -49,6 +51,17 @@ export function useCrackerResources() {
     },
     [res],
   )
+  // run fn after ms (cancelled automatically when the cracker unmounts / Clear)
+  res.later = (ms, fn) => res.timers.push(setTimeout(fn, ms))
+  // play a sound from a world position: delayed by distance (speed of sound,
+  // so the flash comes first) plus a soft echo off the buildings
+  res.playFar = (name, p, cam, { volume = 1, echo = true } = {}) => {
+    const d = cam ? Math.hypot(cam.position.x - p.x, cam.position.y - p.y, cam.position.z - p.z) : 20
+    const delay = Math.min(450, (d / 343) * 1000)
+    const vol = volume * Math.max(0.35, Math.min(1, 28 / (d + 6)))
+    res.later(delay, () => res.play(name, { volume: vol }))
+    if (echo) res.later(delay + 260 + d * 4, () => res.play(name, { volume: vol * 0.28, rate: 0.9 }))
+  }
   res.play = (name, opts) => {
     const id = audio.play(name, opts)
     if (id != null) res.sounds.push([name, id])
