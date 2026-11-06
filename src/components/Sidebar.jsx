@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Flame, Loader2, ShieldAlert } from 'lucide-react'
+import { FlameIcon, SpinnerIcon, ShieldIcon } from './Icons'
 import { CRACKERS } from '../crackers/catalog'
 import { useStore, isBusy, PHASE_LABEL } from '../store/useStore'
 import CrackerIcon from './CrackerIcon'
@@ -43,7 +43,7 @@ function CardDesktop({ c, busy, active, onLight, i }) {
         data-cracker={c.id}
         className="flex h-11 min-w-[80px] cursor-pointer items-center justify-center gap-1 rounded-lg bg-gradient-to-b from-gold-400 to-ember-600 px-3 font-display text-sm font-semibold text-night-950 shadow-[0_4px_18px_-4px_rgb(249_115_22/0.7)] transition-all duration-150 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed disabled:from-white/15 disabled:to-white/10 disabled:text-white/45 disabled:shadow-none"
       >
-        {active ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flame className="h-4 w-4" />}
+        {active ? <SpinnerIcon className="h-4 w-4" /> : <FlameIcon className="h-4 w-4" />}
         {active ? 'Busy' : 'Light it'}
       </button>
     </motion.li>
@@ -52,23 +52,23 @@ function CardDesktop({ c, busy, active, onLight, i }) {
 
 function CardMobile({ c, busy, active, onLight }) {
   return (
-    <li className="shrink-0">
+    <li className="min-w-[60px] flex-1">
       <button
         type="button"
         disabled={busy}
         onClick={() => onLight(c.id)}
         aria-label={`Light ${c.name}`}
-        className={`flex h-[92px] w-[84px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border px-1 transition-all duration-150 focus-visible:outline-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed ${
+        className={`flex h-[88px] w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 transition-all duration-150 focus-visible:outline-2 focus-visible:outline-gold-300 active:scale-95 disabled:cursor-not-allowed ${
           active ? 'border-gold-400/80 bg-gold-400/15' : 'border-white/10 bg-white/[0.04] disabled:opacity-45'
         }`}
       >
         {active ? (
-          <Loader2 className="h-8 w-8 animate-spin text-gold-300" />
+          <SpinnerIcon className="h-8 w-8 text-gold-300" />
         ) : (
           <CrackerIcon id={c.id} className="h-8 w-8 text-gold-300" />
         )}
-        <span className="font-display text-[13px] leading-tight font-semibold text-gold-200">{c.name}</span>
-        <span className="font-hindi text-[12px] leading-tight text-gold-400/90" lang="hi">
+        <span className="font-display text-[12px] leading-tight font-semibold text-gold-200">{c.name}</span>
+        <span className="text-center font-hindi text-[11px] leading-[1.15] text-gold-400/90" lang="hi">
           {c.hindi}
         </span>
       </button>
@@ -106,7 +106,7 @@ export default function Sidebar() {
           ))}
         </ul>
         <p className="mt-3 flex items-center gap-2 rounded-lg bg-night-950/60 px-3 py-2 text-xs text-gold-200/90">
-          <ShieldAlert className="h-4 w-4 shrink-0 text-gold-400" aria-hidden />
+          <ShieldIcon className="h-4 w-4 shrink-0 text-gold-400" />
           Light crackers only with an adult nearby.
         </p>
       </aside>
@@ -114,13 +114,13 @@ export default function Sidebar() {
       {/* Mobile: bottom bar */}
       <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 md:hidden">
         <div className="glass mx-2 mb-[max(8px,env(safe-area-inset-bottom))] rounded-2xl px-2 pt-2 pb-1.5">
-          <ul className="no-scrollbar flex justify-between gap-2 overflow-x-auto">
+          <ul className="no-scrollbar flex gap-1.5 overflow-x-auto">
             {CRACKERS.map((c) => (
               <CardMobile key={c.id} c={c} busy={busy} active={current?.type === c.id} onLight={onLight} />
             ))}
           </ul>
           <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-gold-200/80">
-            <ShieldAlert className="h-3.5 w-3.5 text-gold-400" aria-hidden />
+            <ShieldIcon className="h-3.5 w-3.5 text-gold-400" />
             Light crackers only with an adult nearby.
           </p>
         </div>

@@ -2,10 +2,9 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { fx } from '../crackers/fx'
-import { DiyaLights } from './Diyas'
 
 const SKY = new THREE.Color('#3a3a8a')
-const GROUND = new THREE.Color('#2a160c')
+const GROUND = new THREE.Color('#5a3418') // warm bounce from string lights
 
 export default function SceneLights() {
   const hemi = useRef()
@@ -13,12 +12,12 @@ export default function SceneLights() {
   useFrame(() => {
     // firework flash lights the whole scene from above
     const f = fx.flash
-    hemi.current.intensity = 0.55 + f * 0.9
+    hemi.current.intensity = 0.8 + f * 0.9
     hemi.current.color.copy(SKY).lerp(fx.flashColor, Math.min(1, f * 0.6))
   })
   return (
     <>
-      <hemisphereLight ref={hemi} args={[SKY, GROUND, 0.55]} />
+      <hemisphereLight ref={hemi} args={[SKY, GROUND, 0.8]} />
       <directionalLight
         ref={moon}
         position={[-14, 24, -18]}
@@ -35,11 +34,10 @@ export default function SceneLights() {
         shadow-bias={-0.0006}
         shadow-normalBias={0.03}
       />
-      {/* soft warm glow from the string lights over the courtyard */}
-      <pointLight position={[0, 5.2, -1]} color="#ffb260" intensity={14} distance={22} decay={1.4} />
+      {/* warm glow from the string lights + diyas over the courtyard */}
+      <pointLight position={[0, 4.2, -3.5]} color="#ffa95a" intensity={16} distance={20} decay={1.3} />
       {/* warm porch lamp near the child's home spot */}
       <pointLight position={[1.5, 2.6, 7.2]} color="#ffc27a" intensity={6} distance={10} decay={1.5} />
-      <DiyaLights />
     </>
   )
 }

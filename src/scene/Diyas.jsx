@@ -85,25 +85,3 @@ export default function Diyas() {
     </group>
   )
 }
-
-// A few flickering warm lights representing diya clusters.
-export function DiyaLights() {
-  const refs = useRef([])
-  const spots = useMemo(
-    () => [
-      [0, 0.45, -6.4, 7],
-      [3.4, 0.4, 3.6, 4],
-    ],
-    [],
-  )
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime
-    refs.current.forEach((l, i) => {
-      if (!l) return
-      l.intensity = spots[i][3] * (0.85 + 0.15 * Math.sin(t * 11 + i * 3) * Math.sin(t * 5.7 + i))
-    })
-  })
-  return spots.map(([x, y, z, k], i) => (
-    <pointLight key={i} ref={(el) => (refs.current[i] = el)} position={[x, y, z]} color="#ff9a3c" intensity={k} distance={7} decay={1.6} />
-  ))
-}

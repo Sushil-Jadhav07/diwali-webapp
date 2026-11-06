@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Sparkles } from 'lucide-react'
+import { SparkleIcon } from './Icons'
 import { useStore } from '../store/useStore'
 import { audio } from '../audio/audio'
 
@@ -37,7 +37,7 @@ export default function IntroOverlay() {
               autoFocus
               className="mt-5 inline-flex h-12 cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-b from-gold-400 to-ember-600 px-6 font-display text-base font-semibold text-night-950 shadow-[0_6px_24px_-6px_rgb(249_115_22/0.8)] transition-all duration-150 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300 active:scale-95"
             >
-              <Sparkles className="h-5 w-5" /> Start the celebration
+              <SparkleIcon className="h-5 w-5" /> Start the celebration
             </button>
             <p className="mt-4 text-xs text-gold-200/80">Light crackers only with an adult nearby.</p>
           </motion.div>

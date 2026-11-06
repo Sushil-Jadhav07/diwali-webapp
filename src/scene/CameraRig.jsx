@@ -73,7 +73,14 @@ export default function CameraRig() {
   }, -2)
 
   // priority 0: after controls, before the composer renders
+  const size = useThree((s) => s.size)
   useFrame(() => {
+    // wider lens on tall (portrait / phone) screens
+    const fov = size.width / size.height < 0.8 ? 64 : 50
+    if (camera.fov !== fov) {
+      camera.fov = fov
+      camera.updateProjectionMatrix()
+    }
     if (fx.shake > 0.002) {
       const s = fx.shake
       shakeOffset.current.set((Math.random() - 0.5) * s, (Math.random() - 0.5) * s, (Math.random() - 0.5) * s * 0.5)

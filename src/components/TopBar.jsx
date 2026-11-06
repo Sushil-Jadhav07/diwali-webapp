@@ -1,4 +1,4 @@
-import { RotateCcw, Trash2, Volume2, VolumeX } from 'lucide-react'
+import { ReplayIcon, TrashIcon, SoundOnIcon, SoundOffIcon } from './Icons'
 import { useStore, isBusy } from '../store/useStore'
 import { audio } from '../audio/audio'
 
@@ -54,11 +54,11 @@ export default function TopBar() {
           }}
           disabled={busy || !lastType}
         >
-          <RotateCcw className="h-4 w-4" />
+          <ReplayIcon className="h-4 w-4" />
           <span className="hidden lg:inline">Replay</span>
         </IconButton>
         <IconButton label="Clear scene" onClick={clearScene} disabled={busy || spent === 0}>
-          <Trash2 className="h-4 w-4" />
+          <TrashIcon className="h-4 w-4" />
           <span className="hidden lg:inline">Clear</span>
         </IconButton>
         <IconButton
@@ -68,7 +68,7 @@ export default function TopBar() {
             toggleSound()
           }}
         >
-          {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          {soundOn ? <SoundOnIcon className="h-4 w-4" /> : <SoundOffIcon className="h-4 w-4" />}
         </IconButton>
       </nav>
     </header>

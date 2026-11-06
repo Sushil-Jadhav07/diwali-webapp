@@ -21,13 +21,12 @@ function normalize(buf, peak = 0.9) {
   return buf
 }
 
+// Short de-click fade-in (keeps attack transients) and a longer fade-out.
 function fadeEdges(buf, ms = 8) {
-  const n = Math.min(buf.length >> 1, Math.floor((ms / 1000) * SR))
-  for (let i = 0; i < n; i++) {
-    const g = i / n
-    buf[i] *= g
-    buf[buf.length - 1 - i] *= g
-  }
+  const nOut = Math.min(buf.length >> 1, Math.floor((ms / 1000) * SR))
+  const nIn = Math.min(nOut, Math.floor(0.002 * SR))
+  for (let i = 0; i < nIn; i++) buf[i] *= i / nIn
+  for (let i = 0; i < nOut; i++) buf[buf.length - 1 - i] *= i / nOut
   return buf
 }
 

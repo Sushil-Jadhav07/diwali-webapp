@@ -1,0 +1,51 @@
+# Credits and licences
+
+## External assets
+
+**None.** This project ships with no downloaded models, textures, HDRIs or sound files.
+
+| Item | How it is made | Licence |
+|---|---|---|
+| Child character "Aarav" (kurta, pyjama, mojari) and all his animations | Built from three.js primitives with procedural poses in `src/scene/Child.jsx` | Original work for this project |
+| Houses, string lights, diyas, kandils, toran, trees | Procedural geometry in `src/scene/` | Original work for this project |
+| Courtyard tiles, plaster, rangoli, glow textures | Drawn on `<canvas>` at runtime in `src/scene/textures.js` | Original work for this project |
+| Sky gradient, moon | Shader and mesh in `src/scene/Sky.jsx` | Original work for this project |
+| All sounds (fuse hiss, sparkler crackle, anar whoosh, chakri whirr, rocket whistle, boom, thump, crackle, match strike, night ambience) | Synthesised in the browser in `src/audio/synth.js`, encoded to WAV and played by Howler | Original work for this project |
+| Cracker icons and UI icons | Hand-written inline SVG in `src/components/CrackerIcon.jsx` and `src/components/Icons.jsx` | Original work for this project |
+
+No Pixabay or Mixamo content is used, as the project rules require.
+
+## Fonts (loaded from Google Fonts, not bundled)
+
+| Font | Source | Licence |
+|---|---|---|
+| Fredoka | https://fonts.google.com/specimen/Fredoka | SIL Open Font License 1.1 |
+| Nunito | https://fonts.google.com/specimen/Nunito | SIL Open Font License 1.1 |
+| Baloo 2 (Devanagari) | https://fonts.google.com/specimen/Baloo+2 | SIL Open Font License 1.1 |
+
+The fonts are loaded at runtime from Google Fonts, not redistributed. If they fail to load, the CSS falls back to system fonts (`Nirmala UI` / `Mangal` for Hindi).
+
+## npm packages
+
+Versions are as installed. Licences were read from each package's `package.json`.
+
+| Package | Version | Licence | Source |
+|---|---|---|---|
+| react, react-dom | 19.3.1 | MIT | https://github.com/facebook/react |
+| three | 0.187.0 | MIT | https://github.com/mrdoob/three.js |
+| @react-three/fiber | 9.8.2 | MIT | https://github.com/pmndrs/react-three-fiber |
+| @react-three/drei | 10.7.9 | MIT | https://github.com/pmndrs/drei |
+| @react-three/postprocessing | 3.2.2 | MIT | https://github.com/pmndrs/react-postprocessing |
+| postprocessing (dependency of @react-three/postprocessing; only its `ToneMappingMode` enum is imported) | 6.39.6 | Zlib | https://github.com/pmndrs/postprocessing |
+| zustand | 5.0.16 | MIT | https://github.com/pmndrs/zustand |
+| framer-motion | 14.9.1 | MIT | https://github.com/motiondivision/motion |
+| howler | 2.2.4 | MIT | https://github.com/goldfire/howler.js |
+| tailwindcss, @tailwindcss/vite | 4.3.4 | MIT | https://github.com/tailwindlabs/tailwindcss |
+| vite | 8.3.6 | MIT | https://github.com/vitejs/vite |
+| @vitejs/plugin-react | 6.2.1 | MIT | https://github.com/vitejs/vite-plugin-react |
+
+`lucide-react` (ISC) was tried briefly and then removed, so that every dependency we chose ourselves is MIT.
+
+## Design guidance
+
+The UI direction came from the local **ui-ux-pro-max** Claude Code skill, which recommended the Fredoka/Nunito pairing, SVG icons rather than emoji, 44 px touch targets, visible focus rings and reduced-motion support. The skill was used as guidance only. None of its files are shipped.

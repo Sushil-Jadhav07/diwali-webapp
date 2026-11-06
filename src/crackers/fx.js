@@ -9,7 +9,7 @@ import * as THREE from 'three'
 
 export const MAX_SPARKS = 7000
 export const MAX_SMOKE = 700
-export const LIGHT_POOL = 5
+export const LIGHT_POOL = 3
 
 const GRAVITY = -9.8
 

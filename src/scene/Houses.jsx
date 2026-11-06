@@ -84,7 +84,7 @@ export default function Houses() {
         <HouseBody key={i} h={h} plaster={plaster} />
       ))}
       <Instances mats={layout.litWin} geometry="plane">
-        <meshStandardMaterial color="#2a1608" emissive="#ffb35c" emissiveIntensity={1.6} toneMapped={false} />
+        <meshStandardMaterial color="#2a1608" emissive="#ff9440" emissiveIntensity={1.15} toneMapped={false} />
       </Instances>
       <Instances mats={layout.darkWin} geometry="plane">
         <meshStandardMaterial color="#141a33" roughness={0.3} metalness={0.4} />
