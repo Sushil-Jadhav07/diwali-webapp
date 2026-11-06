@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+  --font-hindi: "Baloo 2", "Nirmala UI", "Mangal", sans-serif;
+
+  --color-night-950: #07061a;
+  --color-night-900: #0b0a24;
+  --color-night-800: #151338;
+  --color-night-700: #221e52;
+  --color-gold-200: #fde9b0;
+  --color-gold-300: #fcd776;
+  --color-gold-400: #f5b942;
+  --color-gold-500: #e89a1c;
+  --color-ember-500: #f97316;
+  --color-ember-600: #ea580c;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-night-950);
+  color: #fff7e6;
+  font-family: var(--font-body);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { touch-action: manipulation; }
+
+.glass {
+  background: linear-gradient(160deg, rgb(34 30 82 / 0.72), rgb(11 10 36 / 0.78));
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgb(245 185 66 / 0.22);
+  box-shadow: 0 10px 40px -10px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(253 233 176 / 0.08);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
