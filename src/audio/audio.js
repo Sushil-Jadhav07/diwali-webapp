@@ -14,6 +14,17 @@ const SPECS = {
   crackleBurst: { loop: false, volume: 0.65 },
   strike: { loop: false, volume: 0.45 },
   ambience: { loop: true, volume: 0.22 },
+  bang: { loop: false, volume: 1.0 },
+  ladiBang: { loop: false, volume: 0.6 },
+  sutliBoom: { loop: false, volume: 1.0 },
+  snap: { loop: false, volume: 0.5 },
+  snakeFizz: { loop: true, volume: 0.3 },
+  shower: { loop: false, volume: 0.75 },
+  whirrDeluxe: { loop: true, volume: 0.55 },
+  whooshBig: { loop: false, volume: 0.85 },
+  cakeShot: { loop: false, volume: 0.7 },
+  burstPop: { loop: false, volume: 0.7 },
+  screamer: { loop: false, volume: 0.5 },
 }
 
 const howls = {}

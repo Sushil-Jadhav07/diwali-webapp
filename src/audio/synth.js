@@ -258,6 +258,204 @@ function ambience() {
   return fadeEdges(normalize(reverb(b, 0.4), 0.5), 200)
 }
 
+// ---------- upgrade-pass sounds ----------
+
+// Shared fountain roar with a ramp/hold/fade envelope (used by bigger fountains).
+function fountainRoar(dur, ramp, holdEnd, fade, roar, pops, bright = 0.35) {
+  const b = buffer(dur)
+  let lp = 0
+  let lp2 = 0
+  const env = (t) => (t < ramp ? (t / ramp) ** 1.2 : t < holdEnd ? 1 : Math.max(0, 1 - (t - holdEnd) / fade) ** 1.4)
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const e = env(t)
+    const w = rnd()
+    lp += (w - lp) * (0.07 + 0.28 * e)
+    lp2 += (lp - lp2) * 0.035
+    b[i] = (lp * 0.5 + (w - lp) * bright + lp2 * roar) * e * (0.86 + 0.14 * Math.sin(t * 31))
+  }
+  addPops(b, pops, { gain: 0.5, density: (u) => env(u * dur), minLen: 18, maxLen: 150 })
+  return fadeEdges(normalize(reverb(b, 0.2), 0.85), 40)
+}
+
+// Bijli / atom bomb: blinding crack, chest thump and a long courtyard echo.
+function bang() {
+  const dur = 3.6
+  const b = buffer(dur)
+  let lp = 0
+  let ph = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    const crack = t < 0.022 ? w * Math.sqrt(1 - t / 0.022) * 1.7 : 0
+    lp += (w - lp) * (0.04 + 0.6 * Math.exp(-t * 30))
+    const f = 55 + 140 * Math.exp(-t * 14)
+    ph += (2 * Math.PI * f) / SR
+    b[i] = crack + Math.sin(ph) * Math.exp(-t * 6) * 1.1 + lp * Math.exp(-t * 3.5) * 2.4
+  }
+  return fadeEdges(normalize(reverb(b, 0.45, 0.88), 0.97), 60)
+}
+
+// One cracker of a ladi: short sharp bang.
+function ladiBang() {
+  const dur = 0.55
+  const b = buffer(dur)
+  let lp = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    lp += (w - lp) * (0.08 + 0.7 * Math.exp(-t * 60))
+    b[i] = (t < 0.008 ? w * 1.4 : 0) + lp * Math.exp(-t * 18) * 2
+  }
+  return fadeEdges(normalize(reverb(b, 0.3, 0.75), 0.9), 20)
+}
+
+// Sutli bomb: deep, heavy boom with a rolling rumble.
+function sutliBoom() {
+  const dur = 4.6
+  const b = buffer(dur)
+  let lp = 0
+  let lp2 = 0
+  let ph = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    const crack = t < 0.016 ? w * (1 - t / 0.016) * 1.1 : 0
+    lp += (w - lp) * (0.015 + 0.35 * Math.exp(-t * 20))
+    lp2 += (lp - lp2) * 0.05
+    const f = 30 + 72 * Math.exp(-t * 5)
+    ph += (2 * Math.PI * f) / SR
+    b[i] = crack + Math.sin(ph) * Math.exp(-t * 2.2) * 1.3 + lp2 * Math.exp(-t * 1.6) * 7 + lp * Math.exp(-t * 2.6) * 1.6
+  }
+  return fadeEdges(normalize(reverb(b, 0.5, 0.9), 0.97), 80)
+}
+
+// Pop-pop snapper: tiny bright snap.
+function snap() {
+  const b = buffer(0.25)
+  let prev = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    const hp = w - prev
+    prev = w
+    b[i] = hp * Math.exp(-t * 90) * (t < 0.003 ? 2 : 1)
+  }
+  return fadeEdges(normalize(reverb(b, 0.15, 0.6), 0.75), 10)
+}
+
+// Snake tablet: quiet bubbling fizz (loopable, 2 s).
+function snakeFizz() {
+  const b = buffer(2.0)
+  let lp = 0
+  let lp2 = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    lp += (w - lp) * 0.2
+    lp2 += (lp - lp2) * 0.2
+    const bubbles = 0.6 + 0.4 * Math.sin(t * 2 * Math.PI * 7) * Math.sin(t * 2 * Math.PI * 3)
+    b[i] = (lp - lp2) * bubbles
+  }
+  addPops(b, 30, { gain: 0.25, minLen: 40, maxLen: 200 })
+  return fadeEdges(normalize(b, 0.6), 4)
+}
+
+// Colour shower: brighter sizzling shower with dense glitter crackle.
+function shower() {
+  const dur = 8.5
+  const b = buffer(dur)
+  let lp = 0
+  let lp2 = 0
+  const env = (t) => (t < 1.2 ? t / 1.2 : t < 6.2 ? 1 : Math.max(0, 1 - (t - 6.2) / 2.3))
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const e = env(t)
+    const w = rnd()
+    lp += (w - lp) * 0.45
+    lp2 += (lp - lp2) * 0.12
+    b[i] = ((lp - lp2) * (0.8 + 0.2 * Math.sin(t * 2 * Math.PI * 17)) + (w - lp) * 0.15) * e
+  }
+  addPops(b, 1400, { gain: 0.35, density: (u) => env(u * dur), minLen: 8, maxLen: 60 })
+  return fadeEdges(normalize(reverb(b, 0.2), 0.8), 40)
+}
+
+// Zameen chakkar deluxe: deeper buzzing spin (loopable, 1 s).
+function whirrDeluxe() {
+  const b = buffer(1.0)
+  let lp = 0
+  let ph = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    lp += (w - lp) * 0.18
+    const spin = Math.abs(Math.sin(Math.PI * 16 * t)) ** 2
+    ph += (2 * Math.PI * 220) / SR
+    const tone = Math.sin(ph) * 0.4 + Math.sin(ph * 2) * 0.18 + Math.sin(ph * 3) * 0.08
+    b[i] = (lp * 0.9 + (w - lp) * 0.2 + tone * 0.7) * (0.3 + 0.7 * spin)
+  }
+  addPops(b, 80, { gain: 0.45, minLen: 15, maxLen: 90 })
+  return fadeEdges(normalize(b, 0.75), 3)
+}
+
+// Anar deluxe: longer, heavier fountain roar.
+const whooshBig = () => fountainRoar(10.8, 2.5, 7.8, 2.5, 1.9, 1200)
+
+// Multi-shot cake: punchy mortar thump with a short lift-off whoosh.
+function cakeShot() {
+  const dur = 0.9
+  const b = buffer(dur)
+  let ph = 0
+  let lp = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    const f = 70 + 160 * Math.exp(-t * 30)
+    ph += (2 * Math.PI * f) / SR
+    lp += (w - lp) * (0.05 + 0.5 * Math.exp(-t * 35))
+    const whoosh = t > 0.03 ? (w - lp) * Math.exp(-t * 5) * 0.25 : 0
+    b[i] = Math.sin(ph) * Math.exp(-t * 12) + lp * Math.exp(-t * 14) * 1.2 + whoosh
+  }
+  return fadeEdges(normalize(reverb(b, 0.3), 0.85), 20)
+}
+
+// Small aerial shell burst: crack + short boom + crackle tail.
+function burstPop() {
+  const dur = 1.8
+  const b = buffer(dur)
+  let lp = 0
+  let ph = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const w = rnd()
+    lp += (w - lp) * (0.03 + 0.5 * Math.exp(-t * 25))
+    const f = 60 + 90 * Math.exp(-t * 9)
+    ph += (2 * Math.PI * f) / SR
+    b[i] = (t < 0.01 ? w * 1.1 : 0) + Math.sin(ph) * Math.exp(-t * 5) * 0.6 + lp * Math.exp(-t * 4) * 1.6
+  }
+  addPops(b, 50, { from: 0.05, to: 0.6, gain: 0.25, minLen: 20, maxLen: 120, density: (u) => Math.exp(-u * 4) })
+  return fadeEdges(normalize(reverb(b, 0.38, 0.84), 0.9), 40)
+}
+
+// Rocket-bundle screamer: wobbling, falling-then-rising scream.
+function screamer() {
+  const dur = 1.6
+  const b = buffer(dur)
+  let ph = 0
+  let lp = 0
+  for (let i = 0; i < b.length; i++) {
+    const t = i / SR
+    const f = 2200 - 900 * (t / dur) + 250 * Math.sin(t * 2 * Math.PI * 5.5)
+    ph += (2 * Math.PI * f) / SR
+    const w = rnd()
+    lp += (w - lp) * 0.3
+    const att = clamp(t / 0.05, 0, 1)
+    const rel = clamp((dur - t) / 0.4, 0, 1)
+    b[i] = (Math.sin(ph) * 0.5 + Math.sin(ph * 2) * 0.18 + Math.sin(ph * 3) * 0.07 + (w - lp) * 0.35) * att * rel
+  }
+  return fadeEdges(normalize(reverb(b, 0.22), 0.7), 10)
+}
+
 // ---------- WAV encoding ----------
 
 function toWavUrl(samples) {
@@ -296,6 +494,17 @@ export const SOUND_BUILDERS = {
   crackleBurst,
   strike,
   ambience,
+  bang,
+  ladiBang,
+  sutliBoom,
+  snap,
+  snakeFizz,
+  shower,
+  whirrDeluxe,
+  whooshBig,
+  cakeShot,
+  burstPop,
+  screamer,
 }
 
 export function renderSound(name) {

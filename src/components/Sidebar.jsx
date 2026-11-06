@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion'
 import { FlameIcon, SpinnerIcon, ShieldIcon } from './Icons'
-import { CRACKERS } from '../crackers/catalog'
+import { CATEGORIES, CRACKERS } from '../crackers/catalog'
 import { useStore, isBusy, PHASE_LABEL } from '../store/useStore'
 import CrackerIcon from './CrackerIcon'
 import { audio } from '../audio/audio'
+
+const GROUPS = CATEGORIES.map((cat) => ({ ...cat, items: CRACKERS.filter((c) => c.category === cat.id) })).filter(
+  (g) => g.items.length > 0,
+)
 
 function useLight() {
   const request = useStore((s) => s.request)
@@ -18,7 +22,7 @@ function CardDesktop({ c, busy, active, onLight, i }) {
     <motion.li
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.05 * i, duration: 0.25, ease: 'easeOut' }}
+      transition={{ delay: Math.min(0.6, 0.035 * i), duration: 0.25, ease: 'easeOut' }}
       className={`flex items-center gap-3 rounded-xl border p-2.5 transition-colors duration-200 ${
         active
           ? 'border-gold-400/70 bg-gold-400/10'
@@ -29,8 +33,8 @@ function CardDesktop({ c, busy, active, onLight, i }) {
         <CrackerIcon id={c.id} className="h-9 w-9" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-[17px] leading-tight font-semibold text-gold-200">{c.name}</p>
-        <p className="font-hindi text-[15px] leading-tight text-gold-400/90" lang="hi">
+        <p className="font-display text-[16px] leading-tight font-semibold text-gold-200">{c.name}</p>
+        <p className="font-hindi text-[14px] leading-tight text-gold-400/90" lang="hi">
           {c.hindi}
         </p>
         <p className="truncate text-xs text-white/55">{c.blurb}</p>
@@ -52,7 +56,7 @@ function CardDesktop({ c, busy, active, onLight, i }) {
 
 function CardMobile({ c, busy, active, onLight }) {
   return (
-    <li className="min-w-[60px] flex-1">
+    <li className="w-[74px] shrink-0">
       <button
         type="button"
         disabled={busy}
@@ -67,7 +71,7 @@ function CardMobile({ c, busy, active, onLight }) {
         ) : (
           <CrackerIcon id={c.id} className="h-8 w-8 text-gold-300" />
         )}
-        <span className="font-display text-[12px] leading-tight font-semibold text-gold-200">{c.name}</span>
+        <span className="text-center font-display text-[11.5px] leading-tight font-semibold text-gold-200">{c.name}</span>
         <span className="text-center font-hindi text-[11px] leading-[1.15] text-gold-400/90" lang="hi">
           {c.hindi}
         </span>
@@ -81,15 +85,18 @@ export default function Sidebar() {
   const current = useStore((s) => s.current)
   const busy = isBusy(phase)
   const onLight = useLight()
+  let n = 0
 
   return (
     <>
-      {/* Desktop / tablet: left sidebar */}
+      {/* Desktop / tablet: left sidebar, scrollable, grouped by category */}
       <aside className="glass pointer-events-auto absolute top-24 bottom-4 left-4 z-20 hidden w-[300px] flex-col rounded-2xl p-4 md:flex">
-        <div className="mb-3 flex items-end justify-between">
+        <div className="mb-2 flex items-end justify-between">
           <div>
             <h2 className="font-display text-xl font-semibold text-gold-200">Crackers</h2>
-            <p className="text-xs text-white/60">Pick one and Aarav lights it.</p>
+            <p className="text-xs text-white/60">
+              {CRACKERS.length} to try. Pick one and Aarav lights it.
+            </p>
           </div>
           <span
             className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${
@@ -100,25 +107,54 @@ export default function Sidebar() {
             {busy ? PHASE_LABEL[phase] : 'Ready'}
           </span>
         </div>
-        <ul className="no-scrollbar -mx-1 flex flex-1 flex-col gap-2 overflow-y-auto px-1">
-          {CRACKERS.map((c, i) => (
-            <CardDesktop key={c.id} c={c} i={i} busy={busy} active={current?.type === c.id} onLight={onLight} />
+        <div className="no-scrollbar -mx-1 flex-1 overflow-y-auto overscroll-contain px-1 pb-1">
+          {GROUPS.map((grp) => (
+            <section key={grp.id} aria-labelledby={`cat-${grp.id}`} className="mb-3 last:mb-0">
+              <h3
+                id={`cat-${grp.id}`}
+                className="sticky top-0 z-10 -mx-1 mb-1.5 flex items-baseline gap-2 rounded-md bg-night-900/90 px-1.5 py-1 font-display text-[12px] font-semibold tracking-[0.12em] text-gold-300 uppercase backdrop-blur-sm"
+              >
+                {grp.label}
+                <span className="font-hindi text-[12px] tracking-normal text-gold-400/70 normal-case" lang="hi">
+                  {grp.hindi}
+                </span>
+                <span className="ml-auto text-[10px] tracking-normal text-white/40">{grp.items.length}</span>
+              </h3>
+              <ul className="flex flex-col gap-2">
+                {grp.items.map((c) => (
+                  <CardDesktop key={c.id} c={c} i={n++} busy={busy} active={current?.type === c.id} onLight={onLight} />
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
         <p className="mt-3 flex items-center gap-2 rounded-lg bg-night-950/60 px-3 py-2 text-xs text-gold-200/90">
           <ShieldIcon className="h-4 w-4 shrink-0 text-gold-400" />
           Light crackers only with an adult nearby.
         </p>
       </aside>
 
-      {/* Mobile: bottom bar */}
+      {/* Mobile: bottom bar, horizontal scroll grouped by category */}
       <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 md:hidden">
         <div className="glass mx-2 mb-[max(8px,env(safe-area-inset-bottom))] rounded-2xl px-2 pt-2 pb-1.5">
-          <ul className="no-scrollbar flex gap-1.5 overflow-x-auto">
-            {CRACKERS.map((c) => (
-              <CardMobile key={c.id} c={c} busy={busy} active={current?.type === c.id} onLight={onLight} />
+          <div className="no-scrollbar flex gap-2 overflow-x-auto overscroll-x-contain">
+            {GROUPS.map((grp) => (
+              <div key={grp.id} className="flex shrink-0 items-stretch gap-1.5" role="group" aria-label={grp.label}>
+                <span
+                  className="flex w-4 shrink-0 items-center justify-center text-[10px] font-bold tracking-wider text-gold-400/80 uppercase [writing-mode:vertical-rl]"
+                  style={{ transform: 'rotate(180deg)' }}
+                  aria-hidden
+                >
+                  {grp.label}
+                </span>
+                <ul className="flex gap-1.5">
+                  {grp.items.map((c) => (
+                    <CardMobile key={c.id} c={c} busy={busy} active={current?.type === c.id} onLight={onLight} />
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
           <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-gold-200/80">
             <ShieldIcon className="h-3.5 w-3.5 text-gold-400" />
             Light crackers only with an adult nearby.
