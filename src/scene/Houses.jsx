@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { mulberry32 } from './shared'
 import { makePlasterTexture } from './textures'
 import { SEGMENTS } from '../world/layout'
+import { pbr, useDetail } from './pbr'
 
 // Apartment blocks of Asynk Family Residency, expanded into facade segments
 // (world/layout.js). Each segment: { x, z, rot, w, d, floors, color, tone }.
@@ -33,6 +34,10 @@ export default function Houses() {
     const doors = []
     const chajja = []
     const kandil = []
+    const frames = []
+    const sills = []
+    const acs = []
+    const rac = mulberry32(17) // separate stream: keeps the lit-window pattern unchanged
     const m = new THREE.Matrix4()
     const q = new THREE.Quaternion()
     const p = new THREE.Vector3()
@@ -54,6 +59,18 @@ export default function Houses() {
           housePoint(h, lx, ly, 0.02, p)
           m.compose(p, q, sc.set(0.95, 1.25, 1))
           ;(rnd() > 0.35 ? litWin : darkWin).push(m.clone())
+          // facade detail: window frame, sill and the odd AC unit
+          housePoint(h, lx, ly, 0.012, p)
+          m.compose(p, q, sc.set(1.13, 1.43, 1))
+          frames.push(m.clone())
+          housePoint(h, lx, ly - 0.69, 0.07, p)
+          m.compose(p, q, sc.set(1.18, 0.07, 0.16))
+          sills.push(m.clone())
+          if (rac() > 0.8) {
+            housePoint(h, lx + 0.8, ly - 0.32, 0.16, p)
+            m.compose(p, q, sc.set(0.62, 0.42, 0.3))
+            acs.push(m.clone())
+          }
           housePoint(h, lx, ly + 0.85, 0.2, p)
           m.compose(p, q, sc.set(1.35, 0.08, 0.45))
           chajja.push(m.clone())
@@ -64,7 +81,7 @@ export default function Houses() {
         }
       }
     }
-    return { litWin, darkWin, doors, chajja, kandil }
+    return { litWin, darkWin, doors, chajja, kandil, frames, sills, acs }
   }, [rnd])
 
   return (
@@ -72,6 +89,15 @@ export default function Houses() {
       {HOUSES.map((h, i) => (
         <HouseBody key={i} h={h} plaster={plaster} />
       ))}
+      <Instances mats={layout.frames} geometry="plane">
+        <meshStandardMaterial color="#e9dfcf" roughness={0.8} />
+      </Instances>
+      <Instances mats={layout.sills} geometry="box">
+        <meshStandardMaterial color="#d8ccba" roughness={0.85} />
+      </Instances>
+      <Instances mats={layout.acs} geometry="box" castShadow>
+        <meshStandardMaterial color="#d9d9d4" roughness={0.55} metalness={0.15} />
+      </Instances>
       <Instances mats={layout.litWin} geometry="plane">
         <primitive object={LIT_WIN_MAT} attach="material" />
       </Instances>
@@ -99,11 +125,14 @@ function HouseBody({ h, plaster }) {
     t.needsUpdate = true
     return t
   }, [plaster, h.w, height])
+  // CC0 plaster relief (normal + roughness) over the tinted procedural plaster
+  const detail = useMemo(() => pbr('grey_plaster', [h.w / 2.5, height / 2.5], ['nor', 'rough']), [h.w, height])
+  const wallRef = useDetail(detail, 0.9)
   return (
     <group position={[h.x, 0, h.z]} rotation-y={h.rot}>
       <mesh position={[0, height / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[h.w, height, h.d]} />
-        <meshStandardMaterial color={h.tone ? new THREE.Color(h.color).offsetHSL(0, -0.04, 0.05) : h.color} map={tex} roughness={0.92} />
+        <meshStandardMaterial ref={wallRef} color={h.tone ? new THREE.Color(h.color).offsetHSL(0, -0.04, 0.05) : h.color} map={tex} roughness={0.92} />
       </mesh>
       {/* parapet */}
       <mesh position={[0, height + 0.25, 0]} castShadow>

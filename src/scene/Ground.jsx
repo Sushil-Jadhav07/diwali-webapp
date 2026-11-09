@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
-import { makeRangoliTexture, makeTileTexture } from './textures'
+import { makeRangoliTexture } from './textures'
 import { RANGOLI_MAIN, RANGOLI_SMALL } from './society/layout'
 import { WORLD, MAIN_LANE, CROSS_LANE, CRACKER_GROUND, BAZAAR, PLAY_AREA, PLAY_ITEMS } from '../world/layout'
 import { mulberry32 } from './shared'
 import { useStore } from '../store/useStore'
 import { translate } from '../i18n/index.js'
+import { pbr, useDetail } from './pbr'
 
 function canvasTex(w, h, draw, repeat = [1, 1]) {
   const c = document.createElement('canvas')
@@ -26,19 +27,6 @@ const noise = (g, w, h, n, seed, light = '255,255,255', dark = '0,0,0', a = 0.06
     g.fillStyle = `rgba(${r() > 0.5 ? light : dark},${a * (0.4 + r())})`
     g.fillRect(r() * w, r() * h, 1 + r() * 2, 1 + r() * 2)
   }
-}
-
-function asphalt(dashes) {
-  return canvasTex(256, 256, (g, w, h) => {
-    g.fillStyle = '#2b2a2e'
-    g.fillRect(0, 0, w, h)
-    noise(g, w, h, 2600, 4, '200,200,210', '0,0,0', 0.08)
-    if (dashes) {
-      g.fillStyle = 'rgba(240,220,160,0.75)'
-      g.fillRect(w / 2 - 3, 20, 6, 90)
-      g.fillRect(w / 2 - 3, 148, 6, 90)
-    }
-  })
 }
 
 // Cracker Ground: packed concrete with safety markings and numbered pads.
@@ -89,17 +77,16 @@ function crackerGroundTex(lang = 'en') {
   })
 }
 
-function grassTex() {
-  return canvasTex(
-    256,
-    256,
-    (g, w, h) => {
-      g.fillStyle = '#26432a'
-      g.fillRect(0, 0, w, h)
-      noise(g, w, h, 5000, 12, '120,170,90', '8,20,10', 0.12)
-    },
-    [10, 6],
-  )
+// painted centre dashes on the main lane (the asphalt texture has none)
+function LaneDashes() {
+  const zs = []
+  for (let z = MAIN_LANE.minZ + 1.6; z < MAIN_LANE.maxZ - 1; z += 3.4) zs.push(z)
+  return zs.map((z) => (
+    <mesh key={z} rotation-x={-Math.PI / 2} position={[(MAIN_LANE.minX + MAIN_LANE.maxX) / 2, 0.009, z]}>
+      <planeGeometry args={[0.14, 1.7]} />
+      <meshStandardMaterial color="#e9d9a6" roughness={0.7} />
+    </mesh>
+  ))
 }
 
 function Plane({ x, z, w, d, y = 0.004, children }) {
@@ -114,27 +101,17 @@ function Plane({ x, z, w, d, y = 0.004, children }) {
 const rect = (r) => ({ x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2, w: r.maxX - r.minX, d: r.maxZ - r.minZ })
 
 export default function Ground() {
-  const tiles = useMemo(() => {
-    const t = makeTileTexture()
-    t.repeat.set((WORLD.maxX - WORLD.minX) / 3, (WORLD.maxZ - WORLD.minZ) / 3)
-    return t
-  }, [])
-  const tex = useMemo(
-    () => ({
-      laneMain: (() => {
-        const t = asphalt(true)
-        t.repeat.set(1, (MAIN_LANE.maxZ - MAIN_LANE.minZ) / 7)
-        return t
-      })(),
-      laneCross: (() => {
-        const t = asphalt(false)
-        t.repeat.set((CROSS_LANE.maxX - CROSS_LANE.minX) / 4, 1)
-        return t
-      })(),
-      grass: grassTex(),
-    }),
-    [],
-  )
+  // CC0 Poly Haven PBR sets (1K); normal/roughness maps are dropped on the Low tier
+  const paving = useMemo(() => pbr('patterned_paving', [(WORLD.maxX - WORLD.minX) / 2.6, (WORLD.maxZ - WORLD.minZ) / 2.6]), [])
+  const laneM = useMemo(() => pbr('asphalt_02', [(MAIN_LANE.maxX - MAIN_LANE.minX) / 3.5, (MAIN_LANE.maxZ - MAIN_LANE.minZ) / 3.5]), [])
+  const laneC = useMemo(() => pbr('asphalt_02', [(CROSS_LANE.maxX - CROSS_LANE.minX) / 3.5, (CROSS_LANE.maxZ - CROSS_LANE.minZ) / 3.5]), [])
+  const grass = useMemo(() => pbr('leafy_grass', [(PLAY_AREA.maxX - PLAY_AREA.minX) / 2.2, (PLAY_AREA.maxZ - PLAY_AREA.minZ) / 2.2]), [])
+  const bazaarFloor = useMemo(() => pbr('patterned_paving', [(BAZAAR.maxX - BAZAAR.minX) / 2, 6.4 / 2], ['nor', 'rough']), [])
+  const pavingRef = useDetail(paving)
+  const laneMRef = useDetail(laneM)
+  const laneCRef = useDetail(laneC)
+  const grassRef = useDetail(grass)
+  const bazaarRef = useDetail(bazaarFloor)
   const lang = useStore((s) => s.lang)
   const groundTex = useMemo(() => crackerGroundTex(lang), [lang])
   const rangoli = useMemo(() => makeRangoliTexture(3, { size: 2048, variant: 'main' }), [])
@@ -150,20 +127,22 @@ export default function Ground() {
         <meshStandardMaterial color="#17120f" roughness={1} />
       </mesh>
       {/* society paving */}
+      {/* paving: slightly glossy (evening dew) so lamps and fireworks sheen on it */}
       <Plane {...inner} y={0}>
-        <meshStandardMaterial map={tiles} roughness={0.8} metalness={0.02} color="#c9b6a6" />
+        <meshStandardMaterial ref={pavingRef} map={paving.map} roughness={0.78} metalness={0.02} color="#e6d2c0" />
       </Plane>
       <Plane {...rect(MAIN_LANE)} y={0.006}>
-        <meshStandardMaterial map={tex.laneMain} roughness={0.9} />
+        <meshStandardMaterial ref={laneMRef} map={laneM.map} roughness={0.85} color="#8a8790" />
       </Plane>
+      <LaneDashes />
       <Plane {...rect(CROSS_LANE)} y={0.005}>
-        <meshStandardMaterial map={tex.laneCross} roughness={0.9} />
+        <meshStandardMaterial ref={laneCRef} map={laneC.map} roughness={0.85} color="#8a8790" />
       </Plane>
       <Plane x={(BAZAAR.minX + BAZAAR.maxX) / 2} z={BAZAAR.laneZ} w={BAZAAR.maxX - BAZAAR.minX} d={6.4} y={0.006}>
-        <meshStandardMaterial color="#6b4a36" roughness={0.95} />
+        <meshStandardMaterial ref={bazaarRef} color="#7a5642" roughness={0.9} />
       </Plane>
       <Plane {...rect(PLAY_AREA)} y={0.006}>
-        <meshStandardMaterial map={tex.grass} roughness={1} />
+        <meshStandardMaterial ref={grassRef} map={grass.map} roughness={1} color="#a8b88e" />
       </Plane>
       {sand && (
         <Plane x={sand.x} z={sand.z} w={sand.w} d={sand.d} y={0.012}>
